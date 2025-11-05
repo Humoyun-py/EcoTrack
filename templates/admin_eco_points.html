@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="uz">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Eco Ballar - EcoTrack Admin</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        /* Admin users.html dagi style qo'llanilsin */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        body {
+            background-color: #f5f9f7;
+            color: #333;
+            line-height: 1.6;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 20px;
+        }
+        
+        header {
+            background: linear-gradient(135deg, #2e8b57, #3cb371);
+            color: white;
+            padding: 15px 0;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        }
+        
+        .header-content {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .logo {
+            font-size: 28px;
+            font-weight: bold;
+            display: flex;
+            align-items: center;
+        }
+        
+        .logo i {
+            margin-right: 10px;
+            color: #ffeb3b;
+        }
+        
+        .logo span {
+            color: #ffeb3b;
+        }
+        
+        nav ul {
+            display: flex;
+            list-style: none;
+        }
+        
+        nav ul li {
+            margin-left: 25px;
+        }
+        
+        nav ul li a {
+            color: white;
+            text-decoration: none;
+            font-weight: 500;
+            transition: color 0.3s;
+            display: flex;
+            align-items: center;
+            padding: 8px 12px;
+            border-radius: 5px;
+        }
+        
+        nav ul li a:hover {
+            color: #ffeb3b;
+            background-color: rgba(255, 255, 255, 0.1);
+        }
+        
+        nav ul li a i {
+            margin-right: 8px;
+            font-size: 18px;
+        }
+        
+        .admin-header {
+            margin: 30px 0;
+        }
+        
+        .admin-header h1 {
+            color: #2e8b57;
+            margin-bottom: 10px;
+        }
+        
+        .eco-points-table {
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.08);
+            overflow: hidden;
+        }
+        
+        .table-header {
+            background: #2e8b57;
+            color: white;
+            padding: 20px;
+            display: grid;
+            grid-template-columns: 1fr 2fr 2fr 1fr 1fr 1fr;
+            gap: 15px;
+            font-weight: 600;
+        }
+        
+        .eco-point-row {
+            padding: 20px;
+            display: grid;
+            grid-template-columns: 1fr 2fr 2fr 1fr 1fr 1fr;
+            gap: 15px;
+            border-bottom: 1px solid #eee;
+            align-items: center;
+        }
+        
+        .eco-point-row:last-child {
+            border-bottom: none;
+        }
+        
+        .eco-point-row:hover {
+            background: #f8f9fa;
+        }
+        
+        .back-link {
+            margin-top: 20px;
+        }
+        
+        .back-link a {
+            color: #2e8b57;
+            text-decoration: none;
+            font-weight: 500;
+            display: inline-flex;
+            align-items: center;
+        }
+        
+        .back-link a:hover {
+            text-decoration: underline;
+        }
+        
+        .back-link a i {
+            margin-right: 8px;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="container">
+            <div class="header-content">
+                <div class="logo">
+                    <i class="fas fa-leaf"></i>
+                    Eco<span>Track</span> Admin
+                </div>
+                <nav>
+                    <ul>
+                        <li><a href="/admin"><i class="fas fa-tachometer-alt"></i> Dashboard</a></li>
+                        <li><a href="/admin/users"><i class="fas fa-users"></i> Foydalanuvchilar</a></li>
+                        <li><a href="/admin/posts"><i class="fas fa-blog"></i> Postlar</a></li>
+                        <li><a href="/admin/comments"><i class="fas fa-comments"></i> Izohlar</a></li>
+                        <li><a href="/admin/eco-points"><i class="fas fa-leaf"></i> Eco Ballar</a></li>
+                        <li><a href="/"><i class="fas fa-home"></i> Saytga</a></li>
+                        <li><a href="/logout"><i class="fas fa-sign-out-alt"></i> Chiqish</a></li>
+                    </ul>
+                </nav>
+            </div>
+        </div>
+    </header>
+
+    <div class="container">
+        <div class="admin-header">
+            <h1>Eco Ballar</h1>
+            <p>Barcha eco ballar va topshiriqlar</p>
+        </div>
+
+        <div class="eco-points-table">
+            <div class="table-header">
+                <div>ID</div>
+                <div>Foydalanuvchi</div>
+                <div>Topshiriq turi</div>
+                <div>Ball</div>
+                <div>Sana</div>
+                <div>Tavsif</div>
+            </div>
+            
+            {% for point in eco_points %}
+            <div class="eco-point-row">
+                <div>#{{ point.id }}</div>
+                <div>
+                    {% for user in users %}
+                        {% if user.id == point.user_id %}
+                            {{ user.name }}
+                        {% endif %}
+                    {% endfor %}
+                </div>
+                <div>{{ point.task_type }}</div>
+                <div>{{ point.points }}</div>
+                <div>{{ point.date.strftime('%Y-%m-%d') }}</div>
+                <div>{{ point.description or '-' }}</div>
+            </div>
+            {% endfor %}
+        </div>
+
+        <div class="back-link">
+            <a href="/admin"><i class="fas fa-arrow-left"></i> Dashboardga qaytish</a>
+        </div>
+    </div>
+</body>
+</html>
