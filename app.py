@@ -499,7 +499,7 @@ def profile():
         total_impact = calculate_environmental_impact(total_points)
         total_comparisons = get_impact_comparisons(total_impact)
         
-        # Next badge info - FIXED: Use the new function
+        # Next badge info
         next_badge = get_next_badge_info(total_points)
         
         # Last activity
@@ -542,8 +542,52 @@ def profile():
                              last_activity=last_activity)
                              
     except Exception as e:
-        print(f"Profile error: {str(e)}")  # Debug uchun
+        print(f"Profile error: {str(e)}")
         flash('Profilni yuklashda xatolik yuz berdi', 'error')
+        return redirect(url_for('dashboard'))
+
+# YANGI: Stats sahifasi qo'shildi
+@app.route('/stats')
+@login_required
+def stats():
+    """Statistika sahifasi"""
+    try:
+        total_points = EcoPoint.get_user_total_points(current_user.id)
+        user_level = total_points // 100
+        
+        # Haftalik statistikalar
+        week_ago = datetime.now() - timedelta(days=7)
+        weekly_points = EcoPoint.query.filter(
+            EcoPoint.user_id == current_user.id,
+            EcoPoint.date >= week_ago.date()
+        ).with_entities(db.func.sum(EcoPoint.points)).scalar() or 0
+        
+        weekly_tasks = EcoPoint.query.filter(
+            EcoPoint.user_id == current_user.id,
+            EcoPoint.date >= week_ago.date()
+        ).count()
+        
+        weekly_stats = {
+            'weekly_points': weekly_points,
+            'tasks_completed': weekly_tasks
+        }
+        
+        # Atrof-muhitga ta'sir
+        environmental_impact = calculate_environmental_impact(total_points)
+        
+        # Yutuqlar
+        badges = Badge.query.filter_by(user_id=current_user.id).all()
+        
+        return render_template('stats.html',
+                             total_points=total_points,
+                             user_level=user_level,
+                             weekly_stats=weekly_stats,
+                             environmental_impact=environmental_impact,
+                             badges=badges)
+                             
+    except Exception as e:
+        print(f"Stats error: {str(e)}")
+        flash('Statistikani yuklashda xatolik yuz berdi', 'error')
         return redirect(url_for('dashboard'))
 
 @app.route('/logout')
