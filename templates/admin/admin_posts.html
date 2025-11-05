@@ -1,0 +1,68 @@
+{% extends "admin/admin_base.html" %}
+
+{% block title %}Postlar - EcoTrack Admin{% endblock %}
+
+{% block admin_content %}
+<div class="admin-header">
+    <h1>Postlarni Boshqarish</h1>
+    <span class="text-muted">Jami: {{ posts|length }} post</span>
+</div>
+
+<div class="card">
+    <div class="card-header">
+        <h3>📝 Barcha Postlar</h3>
+    </div>
+    <div class="card-content">
+        {% if posts %}
+        <table class="admin-table">
+            <thead>
+                <tr>
+                    <th>Sarlavha</th>
+                    <th>Muallif</th>
+                    <th>Yaratilgan</th>
+                    <th>Likelar</th>
+                    <th>Izohlar</th>
+                    <th>Holati</th>
+                    <th>Harakatlar</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for post in posts %}
+                <tr>
+                    <td>
+                        <strong>{{ post.title[:50] }}{% if post.title|length > 50 %}...{% endif %}</strong>
+                    </td>
+                    <td>{{ post.author.name }}</td>
+                    <td>{{ post.created_at.strftime('%Y-%m-%d') }}</td>
+                    <td>{{ post.likes|length }}</td>
+                    <td>{{ post.comments|length }}</td>
+                    <td>
+                        <span class="badge {% if post.is_published %}badge-success{% else %}badge-error{% endif %}">
+                            {{ 'Nashr qilingan' if post.is_published else 'Nashr qilinmagan' }}
+                        </span>
+                    </td>
+                    <td>
+                        <div class="action-buttons" style="display: flex; gap: var(--space-xs);">
+                            <a href="{{ url_for('blog.blog_post', post_id=post.id) }}" 
+                               class="btn btn-sm btn-secondary" target="_blank">
+                                👁️ Ko'rish
+                            </a>
+                            <button class="btn btn-sm btn-error" 
+                                    onclick="return confirm('Postni o\'chirishni xohlaysizmi?')">
+                                🗑️ O'chirish
+                            </button>
+                        </div>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        {% else %}
+        <div class="empty-state" style="text-align: center; padding: var(--space-2xl);">
+            <div style="font-size: 4rem; margin-bottom: var(--space-md);">📝</div>
+            <h3>Hali postlar mavjud emas</h3>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

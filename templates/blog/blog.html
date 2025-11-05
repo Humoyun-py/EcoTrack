@@ -1,0 +1,198 @@
+{% extends "base.html" %}
+
+{% block title %}Blog - EcoTrack{% endblock %}
+
+{% block content %}
+<div class="container">
+    <!-- Blog Header -->
+    <div class="blog-header" style="text-align: center; margin-bottom: var(--space-2xl);">
+        <h1>🌿 EcoTrack Blog</h1>
+        <p class="text-muted">Ekologiya, tabiatni muhofaza qilish va yashil turmush tarzi haqida so'nggi yangiliklar</p>
+        
+        {% if current_user.is_authenticated %}
+        <a href="{{ url_for('blog.blog_create') }}" class="btn btn-primary">
+            ✏️ Yangi Post Yozish
+        </a>
+        {% endif %}
+    </div>
+
+    <!-- Blog Posts Grid -->
+    <div class="blog-grid">
+        {% if posts.items %}
+            {% for post in posts.items %}
+            <article class="blog-post-card">
+                <div class="post-header">
+                    <h2 class="post-title">
+                        <a href="{{ url_for('blog.blog_post', post_id=post.id) }}">{{ post.title }}</a>
+                    </h2>
+                    <div class="post-meta">
+                        <span class="author">👤 {{ post.author.name }}</span>
+                        <span class="date">📅 {{ post.created_at.strftime('%Y-%m-%d') }}</span>
+                    </div>
+                </div>
+                
+                <div class="post-content">
+                    <p>{{ post.content[:200] }}{% if post.content|length > 200 %}...{% endif %}</p>
+                </div>
+                
+                <div class="post-footer">
+                    <div class="post-stats">
+                        <span class="likes">❤️ {{ post.likes|length }} like</span>
+                        <span class="comments">💬 {{ post.comments|length }} comment</span>
+                    </div>
+                    <a href="{{ url_for('blog.blog_post', post_id=post.id) }}" class="btn btn-outline btn-sm">
+                        O'qishni davom etish →
+                    </a>
+                </div>
+            </article>
+            {% endfor %}
+        {% else %}
+            <div class="empty-state" style="text-align: center; padding: var(--space-2xl); grid-column: 1 / -1;">
+                <div style="font-size: 4rem; margin-bottom: var(--space-md);">📝</div>
+                <h3>Hali postlar mavjud emas</h3>
+                <p>Birinchi post yozish uchun quyidagi tugmani bosing</p>
+                {% if current_user.is_authenticated %}
+                <a href="{{ url_for('blog.blog_create') }}" class="btn btn-primary">
+                    ✏️ Birinchi Post Yozish
+                </a>
+                {% else %}
+                <p>Post yozish uchun <a href="{{ url_for('login') }}">tizimga kiring</a></p>
+                {% endif %}
+            </div>
+        {% endif %}
+    </div>
+
+    <!-- Pagination -->
+    {% if posts.pages > 1 %}
+    <div class="pagination" style="display: flex; justify-content: center; margin-top: var(--space-2xl); gap: var(--space-xs);">
+        {% if posts.has_prev %}
+            <a href="{{ url_for('blog.blog_index', page=posts.prev_num) }}" class="btn btn-outline">
+                ← Oldingi
+            </a>
+        {% endif %}
+        
+        {% for page_num in posts.iter_pages() %}
+            {% if page_num %}
+                <a href="{{ url_for('blog.blog_index', page=page_num) }}" 
+                   class="btn {% if page_num == posts.page %}btn-primary{% else %}btn-outline{% endif %}">
+                    {{ page_num }}
+                </a>
+            {% else %}
+                <span class="btn btn-outline">...</span>
+            {% endif %}
+        {% endfor %}
+        
+        {% if posts.has_next %}
+            <a href="{{ url_for('blog.blog_index', page=posts.next_num) }}" class="btn btn-outline">
+                Keyingi →
+            </a>
+        {% endif %}
+    </div>
+    {% endif %}
+</div>
+
+<style>
+.blog-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+    gap: var(--space-lg);
+    margin-bottom: var(--space-2xl);
+}
+
+.blog-post-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    padding: var(--space-xl);
+    transition: all 0.3s var(--ease-smooth);
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+}
+
+.blog-post-card:hover {
+    transform: translateY(-5px);
+    box-shadow: var(--shadow-lg);
+    border-color: var(--primary-light);
+}
+
+.post-header {
+    margin-bottom: var(--space-md);
+}
+
+.post-title {
+    font-size: 1.5rem;
+    margin-bottom: var(--space-sm);
+}
+
+.post-title a {
+    text-decoration: none;
+    color: var(--text-primary);
+    background: linear-gradient(135deg, var(--primary), var(--secondary));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+.post-title a:hover {
+    text-decoration: underline;
+}
+
+.post-meta {
+    display: flex;
+    gap: var(--space-md);
+    font-size: 0.875rem;
+    color: var(--text-muted);
+}
+
+.post-content {
+    flex: 1;
+    margin-bottom: var(--space-md);
+    color: var(--text-secondary);
+    line-height: 1.6;
+}
+
+.post-footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding-top: var(--space-md);
+    border-top: 1px solid var(--border-light);
+}
+
+.post-stats {
+    display: flex;
+    gap: var(--space-md);
+    font-size: 0.875rem;
+    color: var(--text-muted);
+}
+
+.btn-sm {
+    padding: var(--space-xs) var(--space-sm);
+    font-size: 0.875rem;
+}
+
+.empty-state {
+    background: var(--bg-card);
+    border: 2px dashed var(--border);
+    border-radius: var(--radius-lg);
+}
+
+@media (max-width: 768px) {
+    .blog-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .post-footer {
+        flex-direction: column;
+        gap: var(--space-sm);
+        align-items: start;
+    }
+    
+    .post-meta {
+        flex-direction: column;
+        gap: var(--space-xs);
+    }
+}
+</style>
+{% endblock %}

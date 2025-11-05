@@ -58,3 +58,60 @@ navigation_template = """
     {% endif %}
 </div>
 """
+<!-- Modern Navigation -->
+<nav class="navbar">
+    <div class="nav-container">
+        <div class="nav-brand">
+            <a href="{{ url_for('index') }}" class="brand-link">
+                <span class="brand-icon">🌿</span>
+                <span class="brand-text">EcoTrack</span>
+            </a>
+        </div>
+        
+        <div class="nav-menu">
+            <!-- Blog havolasi (hamma uchun) -->
+            <a href="{{ url_for('blog.blog_index') }}" class="nav-link {% if request.endpoint.startswith('blog.') %}active{% endif %}">
+                <span>📝</span>
+                Blog
+            </a>
+            
+            {% if current_user.is_authenticated %}
+                <!-- Foydalanuvchi menyusi -->
+                <a href="{{ url_for('dashboard') }}" class="nav-link {% if request.endpoint == 'dashboard' %}active{% endif %}">
+                    <span>📊</span>
+                    Dashboard
+                </a>
+                <a href="{{ url_for('profile') }}" class="nav-link {% if request.endpoint == 'profile' %}active{% endif %}">
+                    <span>👤</span>
+                    Profil
+                </a>
+                <a href="{{ url_for('stats') }}" class="nav-link {% if request.endpoint == 'stats' %}active{% endif %}">
+                    <span>📈</span>
+                    Statistika
+                </a>
+                
+                <!-- Admin havolasi (faqat adminlar uchun) -->
+                {% if current_user.is_admin %}
+                <a href="{{ url_for('admin.admin_dashboard') }}" class="nav-link {% if request.endpoint.startswith('admin.') %}active{% endif %}">
+                    <span>⚙️</span>
+                    Admin Panel
+                </a>
+                {% endif %}
+                
+                <!-- Chiqish -->
+                <a href="{{ url_for('logout') }}" class="nav-link">
+                    <span>🚪</span>
+                    Chiqish
+                </a>
+            {% else %}
+                <!-- Mehmon menyusi -->
+                <a href="{{ url_for('login') }}" class="nav-link {% if request.endpoint == 'login' %}active{% endif %}">
+                    Kirish
+                </a>
+                <a href="{{ url_for('register') }}" class="nav-link nav-cta">
+                    Boshlash
+                </a>
+            {% endif %}
+        </div>
+    </div>
+</nav>

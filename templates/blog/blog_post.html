@@ -1,0 +1,351 @@
+{% extends "base.html" %}
+
+{% block title %}{{ post.title }} - EcoTrack Blog{% endblock %}
+
+{% block content %}
+<div class="container">
+    <!-- Back to Blog -->
+    <div style="margin-bottom: var(--space-lg);">
+        <a href="{{ url_for('blog.blog_index') }}" class="btn btn-outline">
+            ← Blogga qaytish
+        </a>
+    </div>
+
+    <!-- Blog Post -->
+    <article class="blog-post">
+        <!-- Post Header -->
+        <header class="post-header">
+            <h1 class="post-title">{{ post.title }}</h1>
+            
+            <div class="post-meta">
+                <div class="author-info">
+                    <span class="author-avatar">👤</span>
+                    <div>
+                        <strong>{{ post.author.name }}</strong>
+                        <div class="post-date">
+                            📅 {{ post.created_at.strftime('%Y-%m-%d %H:%M') }}
+                            {% if post.updated_at != post.created_at %}
+                            <span style="color: var(--text-muted); font-size: 0.875rem;">
+                                (tahrirlangan: {{ post.updated_at.strftime('%Y-%m-%d') }})
+                            </span>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="post-actions">
+                    {% if current_user.is_authenticated %}
+                    <button class="like-btn btn btn-outline {% if current_user.id in post.likes|map(attribute='user_id') %}liked{% endif %}" 
+                            data-post-id="{{ post.id }}">
+                        <span class="like-icon">❤️</span>
+                        <span class="like-count">{{ post.likes|length }}</span>
+                    </button>
+                    {% else %}
+                    <a href="{{ url_for('login') }}" class="btn btn-outline">
+                        ❤️ {{ post.likes|length }}
+                    </a>
+                    {% endif %}
+                </div>
+            </div>
+        </header>
+
+        <!-- Post Content -->
+        <div class="post-content">
+            {{ post.content|replace('\n', '<br>')|safe }}
+        </div>
+
+        <!-- Post Footer -->
+        <footer class="post-footer">
+            <div class="post-tags">
+                <span class="tag">🌿 Ekologiya</span>
+                <span class="tag">💚 Yashil Turmush</span>
+            </div>
+            
+            {% if current_user.is_authenticated and current_user.id == post.author_id %}
+            <div class="post-actions">
+                <a href="{{ url_for('blog.blog_edit', post_id=post.id) }}" class="btn btn-secondary">
+                    ✏️ Tahrirlash
+                </a>
+            </div>
+            {% endif %}
+        </footer>
+    </article>
+
+    <!-- Comments Section -->
+    <section class="comments-section">
+        <h3>💬 Izohlar ({{ post.comments|length }})</h3>
+        
+        <!-- Add Comment Form -->
+        {% if current_user.is_authenticated %}
+        <div class="add-comment">
+            <form method="POST" action="{{ url_for('blog.add_comment', post_id=post.id) }}" class="comment-form">
+                <div class="form-group">
+                    <textarea name="content" class="form-input" rows="4" 
+                              placeholder="Izohingizni yozing..." required></textarea>
+                </div>
+                <button type="submit" class="btn btn-primary">
+                    💬 Izoh Qoldirish
+                </button>
+            </form>
+        </div>
+        {% else %}
+        <div class="auth-prompt" style="text-align: center; padding: var(--space-xl); background: var(--bg-secondary); border-radius: var(--radius-lg);">
+            <p>Izoh qoldirish uchun <a href="{{ url_for('login') }}">tizimga kiring</a></p>
+        </div>
+        {% endif %}
+
+        <!-- Comments List -->
+        <div class="comments-list">
+            {% if post.comments %}
+                {% for comment in post.comments|sort(attribute='created_at', reverse=true) %}
+                <div class="comment {% if not comment.is_approved %}comment-pending{% endif %}">
+                    <div class="comment-header">
+                        <div class="comment-author">
+                            <span class="author-avatar">👤</span>
+                            <strong>{{ comment.user.name }}</strong>
+                        </div>
+                        <span class="comment-date">
+                            {{ comment.created_at.strftime('%Y-%m-%d %H:%M') }}
+                        </span>
+                    </div>
+                    <div class="comment-content">
+                        {{ comment.content }}
+                    </div>
+                    {% if not comment.is_approved %}
+                    <div class="comment-status">
+                        <span class="badge badge-warning">Tasdiqlanishi kutilmoqda</span>
+                    </div>
+                    {% endif %}
+                </div>
+                {% endfor %}
+            {% else %}
+                <div class="empty-comments" style="text-align: center; padding: var(--space-2xl);">
+                    <div style="font-size: 3rem; margin-bottom: var(--space-md);">💬</div>
+                    <h4>Hali izohlar mavjud emas</h4>
+                    <p>Birinchi izoh qoldiruvchi bo'ling!</p>
+                </div>
+            {% endif %}
+        </div>
+    </section>
+</div>
+
+<style>
+.blog-post {
+    background: var(--bg-card);
+    border-radius: var(--radius-lg);
+    padding: var(--space-2xl);
+    margin-bottom: var(--space-2xl);
+    border: 1px solid var(--border);
+}
+
+.post-header {
+    margin-bottom: var(--space-xl);
+    padding-bottom: var(--space-lg);
+    border-bottom: 1px solid var(--border-light);
+}
+
+.post-title {
+    font-size: 2.5rem;
+    margin-bottom: var(--space-md);
+    background: var(--gradient-primary);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    line-height: 1.2;
+}
+
+.post-meta {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.author-info {
+    display: flex;
+    align-items: center;
+    gap: var(--space-sm);
+}
+
+.author-avatar {
+    font-size: 2rem;
+}
+
+.post-date {
+    color: var(--text-muted);
+    font-size: 0.9rem;
+}
+
+.post-content {
+    font-size: 1.125rem;
+    line-height: 1.8;
+    color: var(--text-secondary);
+    margin-bottom: var(--space-xl);
+}
+
+.post-footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding-top: var(--space-lg);
+    border-top: 1px solid var(--border-light);
+}
+
+.post-tags {
+    display: flex;
+    gap: var(--space-sm);
+}
+
+.tag {
+    background: var(--bg-secondary);
+    padding: var(--space-xs) var(--space-sm);
+    border-radius: var(--radius-md);
+    font-size: 0.875rem;
+    color: var(--text-muted);
+}
+
+.comments-section {
+    background: var(--bg-card);
+    border-radius: var(--radius-lg);
+    padding: var(--space-2xl);
+    border: 1px solid var(--border);
+}
+
+.add-comment {
+    margin-bottom: var(--space-xl);
+}
+
+.comment-form {
+    margin-bottom: 0;
+}
+
+.comments-list {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-lg);
+}
+
+.comment {
+    background: var(--bg-secondary);
+    padding: var(--space-lg);
+    border-radius: var(--radius-lg);
+    border: 1px solid var(--border);
+}
+
+.comment-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: var(--space-sm);
+}
+
+.comment-author {
+    display: flex;
+    align-items: center;
+    gap: var(--space-sm);
+}
+
+.comment-date {
+    color: var(--text-muted);
+    font-size: 0.875rem;
+}
+
+.comment-content {
+    line-height: 1.6;
+    color: var(--text-secondary);
+}
+
+.comment-pending {
+    opacity: 0.7;
+    background: rgba(255, 215, 0, 0.1);
+}
+
+.badge-warning {
+    background: rgba(255, 215, 0, 0.2);
+    color: #b58900;
+    padding: 4px 8px;
+    border-radius: 12px;
+    font-size: 0.75rem;
+    font-weight: 600;
+}
+
+.like-btn.liked {
+    background: var(--error);
+    color: white;
+    border-color: var(--error);
+}
+
+.empty-comments {
+    background: var(--bg-secondary);
+    border: 2px dashed var(--border);
+    border-radius: var(--radius-lg);
+}
+
+@media (max-width: 768px) {
+    .blog-post {
+        padding: var(--space-lg);
+    }
+    
+    .post-title {
+        font-size: 2rem;
+    }
+    
+    .post-meta {
+        flex-direction: column;
+        gap: var(--space-md);
+        align-items: start;
+    }
+    
+    .post-footer {
+        flex-direction: column;
+        gap: var(--space-md);
+        align-items: start;
+    }
+    
+    .comment-header {
+        flex-direction: column;
+        gap: var(--space-sm);
+        align-items: start;
+    }
+}
+</style>
+
+{% block scripts %}
+{% if current_user.is_authenticated %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Like functionality
+    const likeBtn = document.querySelector('.like-btn');
+    if (likeBtn) {
+        likeBtn.addEventListener('click', function() {
+            const postId = this.dataset.postId;
+            const likeIcon = this.querySelector('.like-icon');
+            const likeCount = this.querySelector('.like-count');
+            
+            fetch('{{ url_for("blog.like_post", post_id=post.id) }}', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.liked) {
+                    this.classList.add('liked');
+                    likeIcon.textContent = '❤️';
+                } else {
+                    this.classList.remove('liked');
+                    likeIcon.textContent = '🤍';
+                }
+                likeCount.textContent = data.likes_count;
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('Xatolik yuz berdi');
+            });
+        });
+    }
+});
+</script>
+{% endif %}
+{% endblock %}
+{% endblock %}

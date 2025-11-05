@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request, redirect, url_for, flash, jsonify
+from flask import Flask, render_template, request, redirect, url_for, flash, jsonify, session
 from flask_login import LoginManager, UserMixin, login_user, login_required, logout_user, current_user
 from werkzeug.security import generate_password_hash, check_password_hash
 from flask_sqlalchemy import SQLAlchemy
@@ -15,6 +15,7 @@ class User(UserMixin, db.Model):
     email = db.Column(db.String(100), unique=True, nullable=False)
     password_hash = db.Column(db.String(200), nullable=False)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    is_admin = db.Column(db.Boolean, default=False)
     
     def __repr__(self):
         return f'<User {self.name}>'
@@ -88,6 +89,43 @@ class Tip(db.Model):
         tips = Tip.query.all()
         return random.choice(tips).text if tips else "Tabiatni seving! 🌍"
 
+# Blog Modellari
+class BlogPost(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    title = db.Column(db.String(200), nullable=False)
+    content = db.Column(db.Text, nullable=False)
+    author_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    is_published = db.Column(db.Boolean, default=True)
+    
+    author = db.relationship('User', backref='posts')
+    
+    def __repr__(self):
+        return f'<BlogPost {self.title}>'
+
+class PostLike(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    post_id = db.Column(db.Integer, db.ForeignKey('blog_post.id'), nullable=False)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    
+    def __repr__(self):
+        return f'<PostLike user:{self.user_id} post:{self.post_id}>'
+
+class PostComment(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    content = db.Column(db.Text, nullable=False)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    post_id = db.Column(db.Integer, db.ForeignKey('blog_post.id'), nullable=False)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    is_approved = db.Column(db.Boolean, default=True)
+    
+    user = db.relationship('User', backref='comments')
+    
+    def __repr__(self):
+        return f'<PostComment {self.content[:50]}...>'
+
 # Flask app initialization
 app = Flask(__name__)
 app.config['SECRET_KEY'] = 'eco-track-secret-key-2024'
@@ -105,12 +143,41 @@ login_manager.login_message = 'Iltimos, tizimga kiring!'
 def load_user(user_id):
     return User.query.get(int(user_id))
 
+def create_admin_user():
+    """Admin foydalanuvchi yaratish"""
+    admin_email = "admin@ecotrack.com"
+    admin_user = User.query.filter_by(email=admin_email).first()
+    
+    if not admin_user:
+        admin_password = generate_password_hash("admin123")
+        new_admin = User(
+            name="EcoTrack Admin",
+            email=admin_email,
+            password_hash=admin_password,
+            is_admin=True
+        )
+        db.session.add(new_admin)
+        db.session.commit()
+        print("✅ Admin foydalanuvchi yaratildi: admin@ecotrack.com / admin123")
+
 def init_db():
     with app.app_context():
-        # Create tables
         db.create_all()
+        create_admin_user()
         
-        # Add initial tips if empty
+        # Test foydalanuvchi yaratish
+        test_user = User.query.filter_by(email="test@test.com").first()
+        if not test_user:
+            test_password = generate_password_hash("test123")
+            new_user = User(
+                name="Test User",
+                email="test@test.com",
+                password_hash=test_password
+            )
+            db.session.add(new_user)
+            db.session.commit()
+            print("✅ Test foydalanuvchi yaratildi: test@test.com / test123")
+        
         if Tip.query.count() == 0:
             tips_data = [
                 {"text": "Bugun plastik ishlatmang 🌿", "category": "daily"},
@@ -131,7 +198,6 @@ def init_db():
             print("✅ Database initialized with sample data")
 
 def calculate_environmental_impact(points):
-    """Calculate environmental impact based on points"""
     return {
         'co2_saved': round(points * 0.2, 1),
         'water_saved': points * 1.5,
@@ -139,77 +205,24 @@ def calculate_environmental_impact(points):
         'energy_saved': points * 0.5
     }
 
-def get_impact_comparisons(impact):
-    """Get environmental impact comparisons"""
-    return {
-        'co2_car_km': round(impact['co2_saved'] / 0.404, 1) if impact['co2_saved'] > 0 else 0,
-        'water_showers': round(impact['water_saved'] / 65) if impact['water_saved'] > 0 else 0,
-        'plastic_bottles': round(impact['plastic_saved'] / 0.05) if impact['plastic_saved'] > 0 else 0,
-        'energy_homes': round(impact['energy_saved'] / 30) if impact['energy_saved'] > 0 else 0
-    }
-
-def get_next_badge_info(total_points):
-    """Get information about the next badge to earn"""
-    badges = [
-        {"points": 50, "name": "Green Starter", "description": "Yashil yo'l boshlovchisi", "icon": "🌱"},
-        {"points": 100, "name": "Eco Friend", "description": "Tabiat do'sti", "icon": "🤝"},
-        {"points": 200, "name": "Nature Guardian", "description": "Tabiat himoyachisi", "icon": "🛡️"},
-        {"points": 500, "name": "Planet Hero", "description": "Sayyora qahramoni", "icon": "🦸"},
-        {"points": 1000, "name": "Eco Master", "description": "Ekologiya ustasi", "icon": "🏆"}
-    ]
-    
-    # Find current and next badge
-    current_badge = badges[0]
-    next_badge = badges[1] if len(badges) > 1 else badges[0]
-    
-    for i, badge in enumerate(badges):
-        if total_points >= badge['points']:
-            current_badge = badge
-            if i + 1 < len(badges):
-                next_badge = badges[i + 1]
-            else:
-                # If it's the last badge, show current one as next (completed)
-                next_badge = badge
-    
-    # Calculate progress to next badge
-    progress = 0
-    if next_badge['points'] > current_badge['points']:
-        progress = ((total_points - current_badge['points']) / 
-                   (next_badge['points'] - current_badge['points'])) * 100
-    else:
-        progress = 100  # All badges earned
-    
-    return {
-        'name': next_badge['name'],
-        'description': next_badge['description'],
-        'icon': next_badge['icon'],
-        'current': total_points,
-        'required': next_badge['points'],
-        'progress': min(100, progress)
-    }
-
-# Routes
+# ===== ASOSIY ROUTELAR =====
 @app.route('/')
 def index():
-    # Basic statistics
     total_users = User.query.count() or 0
     total_tasks = EcoPoint.query.count() or 0
     total_co2 = total_tasks * 2
     
-    # User stats if logged in
     user_stats = {}
     if current_user.is_authenticated:
         total_points = EcoPoint.get_user_total_points(current_user.id)
         user_level = total_points // 100
         
-        # Today's tasks
         today = datetime.now().date()
         today_points = EcoPoint.query.filter_by(
             user_id=current_user.id, 
             date=today
         ).with_entities(db.func.sum(EcoPoint.points)).scalar() or 0
         
-        # Recent badges
         recent_badges = Badge.query.filter_by(
             user_id=current_user.id
         ).order_by(Badge.earned_date.desc()).limit(3).all()
@@ -225,7 +238,6 @@ def index():
             'today_plastic': round(today_points * 0.1, 1)
         }
     
-    # Community statistics
     total_co2_saved = total_tasks * 2
     total_water_saved = total_tasks * 15
     total_trees = total_co2_saved // 21 if total_co2_saved > 0 else 0
@@ -253,7 +265,6 @@ def register():
             email = request.form.get('email', '').strip().lower()
             password = request.form.get('password', '')
             
-            # Validation
             if not name or not email or not password:
                 flash('Barcha maydonlarni to\'ldiring', 'error')
                 return redirect(url_for('register'))
@@ -266,14 +277,12 @@ def register():
                 flash('Bu email allaqachon ro\'yxatdan o\'tgan', 'error')
                 return redirect(url_for('register'))
             
-            # Create user
             hashed_password = generate_password_hash(password)
             new_user = User(name=name, email=email, password_hash=hashed_password)
             
             db.session.add(new_user)
             db.session.commit()
             
-            # Auto login
             login_user(new_user)
             flash(f'Muvaffaqiyatli ro\'yxatdan o\'tdingiz! Xush kelibsiz, {name}!', 'success')
             return redirect(url_for('dashboard'))
@@ -313,7 +322,6 @@ def login():
 @app.route('/dashboard')
 @login_required
 def dashboard():
-    # Daily tasks
     daily_tasks = [
         {"id": 1, "name": "Plastikdan foydalanmang", "points": 10, "icon": "🚫"},
         {"id": 2, "name": "Suvni tejang", "points": 15, "icon": "💧"},
@@ -322,12 +330,10 @@ def dashboard():
         {"id": 5, "name": "O'simlik ekish", "points": 25, "icon": "🌱"}
     ]
     
-    # User statistics
     total_points = EcoPoint.get_user_total_points(current_user.id)
     user_level = total_points // 100
     next_level_points = (user_level + 1) * 100 - total_points
     
-    # Weekly statistics
     week_ago = datetime.now() - timedelta(days=7)
     weekly_points = EcoPoint.query.filter(
         EcoPoint.user_id == current_user.id,
@@ -344,10 +350,8 @@ def dashboard():
         'tasks_completed': weekly_tasks
     }
     
-    # Environmental impact
     environmental_impact = calculate_environmental_impact(total_points)
     
-    # Today's completed tasks
     today = datetime.now().date()
     completed_today = EcoPoint.query.filter_by(
         user_id=current_user.id, 
@@ -355,7 +359,6 @@ def dashboard():
     ).all()
     completed_task_ids = [point.task_type for point in completed_today]
     
-    # Random tip
     random_tip = Tip.get_random_tip()
     
     return render_template('dashboard.html', 
@@ -376,7 +379,6 @@ def complete_task():
         task_id = request.json.get('task_id')
         task_points = request.json.get('points')
         
-        # Check if task already completed today
         today = datetime.now().date()
         existing_task = EcoPoint.query.filter_by(
             user_id=current_user.id,
@@ -390,7 +392,6 @@ def complete_task():
                 'message': 'Siz bugun bu topshiriqni allaqachon bajardingiz!'
             })
         
-        # Add task completion
         new_point = EcoPoint(
             user_id=current_user.id,
             points=task_points,
@@ -399,7 +400,6 @@ def complete_task():
         db.session.add(new_point)
         db.session.commit()
         
-        # Check for new badges
         total_points = EcoPoint.get_user_total_points(current_user.id)
         badge_name = Badge.assign_badge(current_user.id, total_points)
         
@@ -423,139 +423,27 @@ def profile():
     try:
         total_points = EcoPoint.get_user_total_points(current_user.id)
         user_level = total_points // 100
-        progress_percentage = total_points % 100
-        next_level_points = (user_level + 1) * 100 - total_points
         
-        # Badges
         badges = Badge.query.filter_by(user_id=current_user.id).order_by(Badge.earned_date.desc()).all()
         
-        # Active days
-        active_days = db.session.query(db.func.count(db.func.distinct(EcoPoint.date))).filter(
-            EcoPoint.user_id == current_user.id
-        ).scalar() or 0
-        
-        # Today's tasks
-        today = datetime.now().date()
-        today_tasks_db = EcoPoint.query.filter_by(
-            user_id=current_user.id,
-            date=today
-        ).all()
-        
-        today_tasks = []
-        for task in today_tasks_db:
-            task_info = {
-                'icon': '🌿',
-                'name': 'Ekologik topshiriq',
-                'time': 'Bugun',
-                'points': task.points
-            }
-            if 'task_1' in task.task_type:
-                task_info.update({'icon': '🚫', 'name': 'Plastikdan foydalanmang'})
-            elif 'task_2' in task.task_type:
-                task_info.update({'icon': '💧', 'name': 'Suvni tejang'})
-            elif 'task_3' in task.task_type:
-                task_info.update({'icon': '⚡', 'name': 'Eneriyani tejang'})
-            elif 'task_4' in task.task_type:
-                task_info.update({'icon': '♻️', 'name': 'Qayta ishlang'})
-            elif 'task_5' in task.task_type:
-                task_info.update({'icon': '🌱', 'name': 'O\'simlik ekish'})
-            
-            today_tasks.append(task_info)
-        
-        # Today's points
-        today_points = sum(task.points for task in today_tasks_db)
-        
-        # Today's environmental impact
-        today_impact = calculate_environmental_impact(today_points)
-        today_comparisons = get_impact_comparisons(today_impact)
-        
-        # Recent activities
-        recent_activities = []
-        activities_db = EcoPoint.query.filter_by(
-            user_id=current_user.id
-        ).order_by(EcoPoint.date.desc()).limit(10).all()
-        
-        for activity in activities_db:
-            activity_info = {
-                'date': activity.date,
-                'icon': '✅',
-                'description': 'Ekologik topshiriq bajarildi',
-                'points': activity.points
-            }
-            if 'task_1' in activity.task_type:
-                activity_info.update({'icon': '🚫', 'description': 'Plastikdan foydalanmadingiz'})
-            elif 'task_2' in activity.task_type:
-                activity_info.update({'icon': '💧', 'description': 'Suv tejadingiz'})
-            elif 'task_3' in activity.task_type:
-                activity_info.update({'icon': '⚡', 'description': 'Eneriya tejadingiz'})
-            elif 'task_4' in activity.task_type:
-                activity_info.update({'icon': '♻️', 'description': 'Chiqlarni qayta ishladingiz'})
-            elif 'task_5' in activity.task_type:
-                activity_info.update({'icon': '🌱', 'description': 'O\'simlik ekdingiz'})
-            
-            recent_activities.append(activity_info)
-        
-        # Total environmental impact
-        total_impact = calculate_environmental_impact(total_points)
-        total_comparisons = get_impact_comparisons(total_impact)
-        
-        # Next badge info
-        next_badge = get_next_badge_info(total_points)
-        
-        # Last activity
-        last_activity = "Bugun"
-        if recent_activities:
-            last_activity_date = recent_activities[0]['date']
-            if last_activity_date == datetime.now().date():
-                last_activity = "Bugun"
-            else:
-                days_ago = (datetime.now().date() - last_activity_date).days
-                last_activity = f"{days_ago} kun oldin"
-        
         return render_template('profile.html',
-                             user=current_user,
-                             total_points=total_points,
-                             user_level=user_level,
-                             progress_percentage=progress_percentage,
-                             next_level_points=next_level_points,
-                             badges=badges,
-                             active_days=active_days,
-                             today_date=datetime.now().strftime('%Y-%m-%d'),
-                             today_tasks=today_tasks,
-                             today_points=today_points,
-                             today_co2=today_impact['co2_saved'],
-                             today_water=int(today_impact['water_saved']),
-                             today_plastic=today_impact['plastic_saved'],
-                             co2_car_km=today_comparisons['co2_car_km'],
-                             water_showers=today_comparisons['water_showers'],
-                             plastic_bottles=today_comparisons['plastic_bottles'],
-                             recent_activities=recent_activities,
-                             total_co2_saved=total_impact['co2_saved'],
-                             total_water_saved=int(total_impact['water_saved']),
-                             total_plastic_saved=total_impact['plastic_saved'],
-                             total_energy_saved=int(total_impact['energy_saved']),
-                             total_co2_trees=round(total_impact['co2_saved'] / 21) if total_impact['co2_saved'] > 0 else 0,
-                             total_water_showers=round(total_impact['water_saved'] / 65) if total_impact['water_saved'] > 0 else 0,
-                             total_plastic_bottles=round(total_impact['plastic_saved'] / 0.05) if total_impact['plastic_saved'] > 0 else 0,
-                             total_energy_homes=round(total_impact['energy_saved'] / 30) if total_impact['energy_saved'] > 0 else 0,
-                             next_badge=next_badge,
-                             last_activity=last_activity)
+                            user=current_user,
+                            total_points=total_points,
+                            user_level=user_level,
+                            badges=badges)
                              
     except Exception as e:
         print(f"Profile error: {str(e)}")
         flash('Profilni yuklashda xatolik yuz berdi', 'error')
         return redirect(url_for('dashboard'))
 
-# YANGI: Stats sahifasi qo'shildi
 @app.route('/stats')
 @login_required
 def stats():
-    """Statistika sahifasi"""
     try:
         total_points = EcoPoint.get_user_total_points(current_user.id)
         user_level = total_points // 100
         
-        # Haftalik statistikalar
         week_ago = datetime.now() - timedelta(days=7)
         weekly_points = EcoPoint.query.filter(
             EcoPoint.user_id == current_user.id,
@@ -572,18 +460,15 @@ def stats():
             'tasks_completed': weekly_tasks
         }
         
-        # Atrof-muhitga ta'sir
         environmental_impact = calculate_environmental_impact(total_points)
-        
-        # Yutuqlar
         badges = Badge.query.filter_by(user_id=current_user.id).all()
         
         return render_template('stats.html',
-                             total_points=total_points,
-                             user_level=user_level,
-                             weekly_stats=weekly_stats,
-                             environmental_impact=environmental_impact,
-                             badges=badges)
+                            total_points=total_points,
+                            user_level=user_level,
+                            weekly_stats=weekly_stats,
+                            environmental_impact=environmental_impact,
+                            badges=badges)
                              
     except Exception as e:
         print(f"Stats error: {str(e)}")
@@ -603,19 +488,190 @@ def get_tip():
     random_tip = Tip.get_random_tip()
     return jsonify({'tip': random_tip})
 
+# ===== BLOG ROUTES =====
+@app.route('/blog')
+def blog_index():
+    try:
+        posts = BlogPost.query.filter_by(is_published=True)\
+            .order_by(BlogPost.created_at.desc())\
+            .all()
+        return render_template('blog.html', posts=posts)
+    except Exception as e:
+        print(f"Blog error: {str(e)}")
+        flash('Blog sahifasini yuklashda xatolik', 'error')
+        return redirect(url_for('index'))
+
+@app.route('/blog/create', methods=['GET', 'POST'])
+@login_required
+def blog_create():
+    if request.method == 'POST':
+        try:
+            title = request.form.get('title')
+            content = request.form.get('content')
+            
+            if not title or not content:
+                flash('Sarlavha va mazumni to\'ldiring', 'error')
+                return redirect(url_for('blog_create'))
+            
+            post = BlogPost(
+                title=title,
+                content=content,
+                author_id=current_user.id
+            )
+            
+            db.session.add(post)
+            db.session.commit()
+            
+            flash('Post muvaffaqiyatli yaratildi!', 'success')
+            return redirect(url_for('blog_index'))
+            
+        except Exception as e:
+            db.session.rollback()
+            flash('Post yaratishda xatolik yuz berdi', 'error')
+            return redirect(url_for('blog_create'))
+    
+    return render_template('blog_create.html')
+
+# ===== ADMIN ROUTES =====
+@app.route('/admin-login', methods=['GET', 'POST'])
+def admin_login():
+    # Agar admin allaqachon kirgan bo'lsa, admin paneliga yo'naltirish
+    if current_user.is_authenticated and current_user.is_admin:
+        return redirect(url_for('admin_dashboard'))
+        
+    if request.method == 'POST':
+        try:
+            email = request.form.get('email', '').strip().lower()
+            password = request.form.get('password', '')
+            
+            user = User.query.filter_by(email=email).first()
+            
+            if user and check_password_hash(user.password_hash, password):
+                if user.is_admin:
+                    login_user(user)
+                    flash(f'Xush kelibsiz, Admin {user.name}!', 'success')
+                    return redirect(url_for('admin_dashboard'))
+                else:
+                    flash('Sizda admin huquqi yo\'q. Faqat admin foydalanuvchilari kirishi mumkin.', 'error')
+            else:
+                flash('Email yoki parol noto\'g\'ri', 'error')
+                
+        except Exception as e:
+            print(f"Admin login error: {str(e)}")
+            flash('Kirishda xatolik yuz berdi. Iltimos, qayta urinib ko\'ring.', 'error')
+    
+    return render_template('admin_login.html')
+
+@app.route('/admin')
+@login_required
+def admin_dashboard():
+    if not current_user.is_admin:
+        flash('Sizda admin huquqi yo\'q', 'error')
+        return redirect(url_for('index'))
+    
+    try:
+        # Admin statistikasi
+        total_users = User.query.count()
+        total_posts = BlogPost.query.count()
+        total_comments = PostComment.query.count()
+        total_eco_points = EcoPoint.query.count()
+        
+        stats = {
+            'total_users': total_users,
+            'total_posts': total_posts,
+            'total_comments': total_comments,
+            'total_eco_points': total_eco_points
+        }
+        
+        # So'nggi faolliklar
+        recent_users = User.query.order_by(User.created_at.desc()).limit(5).all()
+        recent_posts = BlogPost.query.order_by(BlogPost.created_at.desc()).limit(5).all()
+        
+        return render_template('admin_dashboard.html', 
+                             stats=stats,
+                             recent_users=recent_users,
+                             recent_posts=recent_posts)
+    except Exception as e:
+        print(f"Admin dashboard error: {str(e)}")
+        flash('Admin panelini yuklashda xatolik', 'error')
+        return redirect(url_for('index'))
+
+@app.route('/admin/users')
+@login_required
+def admin_users():
+    if not current_user.is_admin:
+        flash('Sizda admin huquqi yo\'q', 'error')
+        return redirect(url_for('index'))
+    
+    try:
+        users = User.query.all()
+        return render_template('admin_users.html', users=users)
+    except Exception as e:
+        print(f"Admin users error: {str(e)}")
+        flash('Foydalanuvchilarni yuklashda xatolik', 'error')
+        return redirect(url_for('admin_dashboard'))
+
+@app.route('/admin/posts')
+@login_required
+def admin_posts():
+    if not current_user.is_admin:
+        flash('Sizda admin huquqi yo\'q', 'error')
+        return redirect(url_for('index'))
+    
+    try:
+        posts = BlogPost.query.all()
+        return render_template('admin_posts.html', posts=posts)
+    except Exception as e:
+        print(f"Admin posts error: {str(e)}")
+        flash('Postlarni yuklashda xatolik', 'error')
+        return redirect(url_for('admin_dashboard'))
+
+@app.route('/admin/comments')
+@login_required
+def admin_comments():
+    if not current_user.is_admin:
+        flash('Sizda admin huquqi yo\'q', 'error')
+        return redirect(url_for('index'))
+    
+    try:
+        comments = PostComment.query.all()
+        return render_template('admin_comments.html', comments=comments)
+    except Exception as e:
+        print(f"Admin comments error: {str(e)}")
+        flash('Kommentlarni yuklashda xatolik', 'error')
+        return redirect(url_for('admin_dashboard'))
+
+@app.route('/admin/eco-points')
+@login_required
+def admin_eco_points():
+    if not current_user.is_admin:
+        flash('Sizda admin huquqi yo\'q', 'error')
+        return redirect(url_for('index'))
+    
+    try:
+        eco_points = EcoPoint.query.all()
+        return render_template('admin_eco_points.html', eco_points=eco_points)
+    except Exception as e:
+        print(f"Admin eco points error: {str(e)}")
+        flash('Eco ballarni yuklashda xatolik', 'error')
+        return redirect(url_for('admin_dashboard'))
+
 # Error handlers
 @app.errorhandler(404)
 def not_found_error(error):
-    return render_template('errors/404.html'), 404
+    return render_template('404.html'), 404
 
 @app.errorhandler(500)
 def internal_error(error):
     db.session.rollback()
-    return render_template('errors/500.html'), 500
+    return render_template('500.html'), 500
 
 if __name__ == '__main__':
     with app.app_context():
         init_db()
     print("🌿 EcoTrack ilovasi ishga tushmoqda...")
     print("📍 Manzil: http://127.0.0.1:5000")
+    print("👤 Oddiy foydalanuvchi: test@test.com / test123")
+    print("🔐 Admin login: admin@ecotrack.com / admin123")
+    print("🔗 Admin panel: http://127.0.0.1:5000/admin-login")
     app.run(debug=True, host='0.0.0.0', port=5000)

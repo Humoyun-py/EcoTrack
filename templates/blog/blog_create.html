@@ -1,0 +1,106 @@
+{% extends "base.html" %}
+
+{% block title %}Yangi Post Yozish - EcoTrack Blog{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="blog-create-header">
+        <h1>✏️ Yangi Blog Post</h1>
+        <p>O'z fikrlaringiz va tajribalaringizni boshqalar bilan ulashing</p>
+    </div>
+
+    <div class="blog-editor">
+        <form method="POST" class="post-form">
+            <div class="form-group">
+                <label for="title" class="form-label">Sarlavha</label>
+                <input type="text" id="title" name="title" class="form-input" 
+                       placeholder="Postingiz uchun sarlavha..." required>
+            </div>
+
+            <div class="form-group">
+                <label for="content" class="form-label">Mazmuni</label>
+                <textarea id="content" name="content" class="form-input" 
+                          rows="15" placeholder="Postingiz mazmunini yozing..." required></textarea>
+            </div>
+
+            <div class="form-actions">
+                <button type="submit" class="btn btn-primary btn-large">
+                    📢 Postni Nashr Qilish
+                </button>
+                <a href="{{ url_for('blog.blog_index') }}" class="btn btn-outline">
+                    Bekor Qilish
+                </a>
+            </div>
+        </form>
+    </div>
+
+    <!-- Writing Tips -->
+    <div class="writing-tips">
+        <h3>💡 Yozish Maslahatlari</h3>
+        <ul>
+            <li>Sarlavha qisqa va tushunarli bo'lsin</li>
+            <li>Mazmunni paragraflarga bo'ling</li>
+            <li>O'qishni osonlashtirish uchun bo'sh joylardan foydalaning</li>
+            <li>Shaxsiy tajribalaringizni ulashing</li>
+            <li>Ekologik masalalarga e'tibor qarating</li>
+        </ul>
+    </div>
+</div>
+
+<style>
+.blog-create-header {
+    text-align: center;
+    margin-bottom: var(--space-2xl);
+}
+
+.blog-editor {
+    background: var(--bg-card);
+    border-radius: var(--radius-lg);
+    padding: var(--space-2xl);
+    border: 1px solid var(--border);
+    margin-bottom: var(--space-xl);
+}
+
+.post-form {
+    max-width: 100%;
+}
+
+.form-actions {
+    display: flex;
+    gap: var(--space-md);
+    margin-top: var(--space-xl);
+}
+
+.writing-tips {
+    background: var(--bg-secondary);
+    border-radius: var(--radius-lg);
+    padding: var(--space-xl);
+    border: 1px solid var(--border);
+}
+
+.writing-tips h3 {
+    margin-bottom: var(--space-md);
+    color: var(--text-primary);
+}
+
+.writing-tips ul {
+    color: var(--text-secondary);
+    line-height: 1.8;
+    padding-left: var(--space-md);
+}
+
+.writing-tips li {
+    margin-bottom: var(--space-xs);
+}
+
+@media (max-width: 768px) {
+    .blog-editor {
+        padding: var(--space-lg);
+    }
+    
+    .form-actions {
+        flex-direction: column;
+    }
+}
+</style>
+{% endblock %}

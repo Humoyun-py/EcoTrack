@@ -1,0 +1,139 @@
+{% extends "base.html" %}
+
+{% block title %}Postni Tahrirlash - EcoTrack Blog{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="blog-edit-header">
+        <h1>✏️ Postni Tahrirlash</h1>
+        <p>"{{ post.title }}" postini tahrirlash</p>
+    </div>
+
+    <div class="blog-editor">
+        <form method="POST" class="post-form">
+            <div class="form-group">
+                <label for="title" class="form-label">Sarlavha</label>
+                <input type="text" id="title" name="title" class="form-input" 
+                       value="{{ post.title }}" required>
+            </div>
+
+            <div class="form-group">
+                <label for="content" class="form-label">Mazmuni</label>
+                <textarea id="content" name="content" class="form-input" 
+                          rows="15" required>{{ post.content }}</textarea>
+            </div>
+
+            <div class="form-actions">
+                <button type="submit" class="btn btn-primary btn-large">
+                    💾 O'zgarishlarni Saqlash
+                </button>
+                <a href="{{ url_for('blog.blog_post', post_id=post.id) }}" class="btn btn-outline">
+                    Bekor Qilish
+                </a>
+                <button type="button" class="btn btn-error" 
+                        onclick="if(confirm('Postni o\'chirishni xohlaysizmi?')) { document.getElementById('delete-form').submit(); }">
+                    🗑️ O'chirish
+                </button>
+            </div>
+        </form>
+
+        <!-- Delete Form -->
+        <form id="delete-form" method="POST" action="#" style="display: none;">
+            <input type="hidden" name="_method" value="DELETE">
+        </form>
+    </div>
+
+    <!-- Post Statistics -->
+    <div class="post-statistics">
+        <h3>📊 Post Statistikasi</h3>
+        <div class="stats-grid">
+            <div class="stat-item">
+                <span class="stat-number">{{ post.likes|length }}</span>
+                <span class="stat-label">Likelar</span>
+            </div>
+            <div class="stat-item">
+                <span class="stat-number">{{ post.comments|length }}</span>
+                <span class="stat-label">Izohlar</span>
+            </div>
+            <div class="stat-item">
+                <span class="stat-number">{{ post.created_at.strftime('%Y-%m-%d') }}</span>
+                <span class="stat-label">Yaratilgan</span>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.blog-edit-header {
+    margin-bottom: var(--space-2xl);
+}
+
+.blog-editor {
+    background: var(--bg-card);
+    border-radius: var(--radius-lg);
+    padding: var(--space-2xl);
+    border: 1px solid var(--border);
+    margin-bottom: var(--space-xl);
+}
+
+.form-actions {
+    display: flex;
+    gap: var(--space-md);
+    margin-top: var(--space-xl);
+    flex-wrap: wrap;
+}
+
+.post-statistics {
+    background: var(--bg-secondary);
+    border-radius: var(--radius-lg);
+    padding: var(--space-xl);
+    border: 1px solid var(--border);
+}
+
+.post-statistics h3 {
+    margin-bottom: var(--space-lg);
+    color: var(--text-primary);
+}
+
+.stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+    gap: var(--space-md);
+}
+
+.stat-item {
+    text-align: center;
+    padding: var(--space-md);
+    background: var(--bg-card);
+    border-radius: var(--radius-md);
+    border: 1px solid var(--border);
+}
+
+.stat-number {
+    display: block;
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: var(--primary);
+    margin-bottom: var(--space-xs);
+}
+
+.stat-label {
+    font-size: 0.875rem;
+    color: var(--text-muted);
+}
+
+@media (max-width: 768px) {
+    .blog-editor {
+        padding: var(--space-lg);
+    }
+    
+    .form-actions {
+        flex-direction: column;
+    }
+    
+    .stats-grid {
+        grid-template-columns: repeat(3, 1fr);
+    }
+}
+</style>
+{% endblock %}

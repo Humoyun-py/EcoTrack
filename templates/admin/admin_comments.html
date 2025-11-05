@@ -1,0 +1,79 @@
+{% extends "admin/admin_base.html" %}
+
+{% block title %}Kommentlar - EcoTrack Admin{% endblock %}
+
+{% block admin_content %}
+<div class="admin-header">
+    <h1>Kommentlarni Boshqarish</h1>
+    <span class="text-muted">Jami: {{ comments|length }} izoh</span>
+</div>
+
+<div class="card">
+    <div class="card-header">
+        <h3>💬 Barcha Kommentlar</h3>
+    </div>
+    <div class="card-content">
+        {% if comments %}
+        <table class="admin-table">
+            <thead>
+                <tr>
+                    <th>Foydalanuvchi</th>
+                    <th>Post</th>
+                    <th>Komment</th>
+                    <th>Sana</th>
+                    <th>Holati</th>
+                    <th>Harakatlar</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for comment in comments %}
+                <tr>
+                    <td>
+                        <strong>{{ comment.user.name }}</strong>
+                    </td>
+                    <td>
+                        {{ comment.post.title[:30] }}{% if comment.post.title|length > 30 %}...{% endif %}
+                    </td>
+                    <td>
+                        {{ comment.content[:50] }}{% if comment.content|length > 50 %}...{% endif %}
+                    </td>
+                    <td>{{ comment.created_at.strftime('%Y-%m-%d') }}</td>
+                    <td>
+                        <span class="badge {% if comment.is_approved %}badge-success{% else %}badge-warning{% endif %}">
+                            {{ 'Tasdiqlangan' if comment.is_approved else 'Kutilmoqda' }}
+                        </span>
+                    </td>
+                    <td>
+                        <div class="action-buttons" style="display: flex; gap: var(--space-xs);">
+                            {% if not comment.is_approved %}
+                            <button class="btn btn-sm btn-success">
+                                ✅ Tasdiqlash
+                            </button>
+                            {% endif %}
+                            <button class="btn btn-sm btn-error" 
+                                    onclick="return confirm('Kommentni o\'chirishni xohlaysizmi?')">
+                                🗑️ O'chirish
+                            </button>
+                        </div>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        {% else %}
+        <div class="empty-state" style="text-align: center; padding: var(--space-2xl);">
+            <div style="font-size: 4rem; margin-bottom: var(--space-md);">💬</div>
+            <h3>Hali kommentlar mavjud emas</h3>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<style>
+.badge-warning {
+    background: rgba(255, 215, 0, 0.1);
+    color: #b58900;
+    border: 1px solid #b58900;
+}
+</style>
+{% endblock %}

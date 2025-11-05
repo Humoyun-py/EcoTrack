@@ -1,0 +1,94 @@
+{% extends "admin/admin_base.html" %}
+
+{% block title %}Quizlarni Boshqarish - EcoTrack{% endblock %}
+
+{% block admin_content %}
+<div class="admin-header">
+    <h1>Quizlarni Boshqarish</h1>
+    <a href="{{ url_for('admin.admin_quiz_add') }}" class="btn btn-primary">
+        + Yangi Quiz
+    </a>
+</div>
+
+<div class="card">
+    <div class="card-header">
+        <h3>Barcha Quizlar</h3>
+    </div>
+    <div class="card-content">
+        {% if quizzes %}
+        <table class="admin-table">
+            <thead>
+                <tr>
+                    <th>Nomi</th>
+                    <th>Tavsif</th>
+                    <th>Savollar</th>
+                    <th>Yaratilgan</th>
+                    <th>Holati</th>
+                    <th>Harakatlar</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for quiz in quizzes %}
+                <tr>
+                    <td><strong>{{ quiz.title }}</strong></td>
+                    <td>{{ quiz.description[:50] }}{% if quiz.description|length > 50 %}...{% endif %}</td>
+                    <td>{{ quiz.questions|length }}</td>
+                    <td>{{ quiz.created_at.strftime('%Y-%m-%d') }}</td>
+                    <td>
+                        <span class="badge {% if quiz.is_active %}badge-success{% else %}badge-error{% endif %}">
+                            {{ 'Aktiv' if quiz.is_active else 'Nofaol' }}
+                        </span>
+                    </td>
+                    <td>
+                        <div class="action-buttons" style="display: flex; gap: var(--space-xs);">
+                            <a href="{{ url_for('admin.admin_quiz_questions', quiz_id=quiz.id) }}" 
+                               class="btn btn-sm btn-secondary">
+                                ✏️ Tahrirlash
+                            </a>
+                            <form method="POST" action="#" style="display: inline;">
+                                <button type="submit" class="btn btn-sm btn-error" 
+                                        onclick="return confirm('Quizni o\'chirishni xohlaysizmi?')">
+                                    🗑️ O'chirish
+                                </button>
+                            </form>
+                        </div>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        {% else %}
+        <div class="empty-state" style="text-align: center; padding: var(--space-2xl);">
+            <div style="font-size: 4rem; margin-bottom: var(--space-md);">❓</div>
+            <h3>Hali quizlar mavjud emas</h3>
+            <p>Birinchi quizingizni yaratish uchun quyidagi tugmani bosing</p>
+            <a href="{{ url_for('admin.admin_quiz_add') }}" class="btn btn-primary">
+                + Quiz Yaratish
+            </a>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<style>
+.badge {
+    display: inline-block;
+    padding: 4px 8px;
+    border-radius: 12px;
+    font-size: 0.75rem;
+    font-weight: 600;
+}
+
+.badge-success {
+    background: rgba(16, 185, 129, 0.1);
+    color: var(--success);
+    border: 1px solid var(--success);
+}
+
+.badge-error {
+    background: rgba(239, 68, 68, 0.1);
+    color: var(--error);
+    border: 1px solid var(--error);
+}
+</style>
+{% endblock %}
