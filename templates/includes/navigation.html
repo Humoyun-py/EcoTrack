@@ -1,0 +1,60 @@
+# Navigatsiya uchun alohida template
+"""
+Navigatsiya menyusi uchun template
+"""
+
+navigation_template = """
+<nav class="navbar">
+    <div class="nav-container">
+        <div class="nav-logo">
+            <a href="{{ url_for('index') }}">
+                <span class="logo-icon">🌿</span>
+                EcoTrack
+            </a>
+        </div>
+        
+        <div class="nav-menu">
+            {% if current_user.is_authenticated %}
+                <a href="{{ url_for('dashboard') }}" class="nav-link">
+                    <span class="nav-icon">📊</span>
+                    Dashboard
+                </a>
+                <a href="{{ url_for('profile') }}" class="nav-link">
+                    <span class="nav-icon">👤</span>
+                    Profil
+                </a>
+                <a href="{{ url_for('logout') }}" class="nav-link">
+                    <span class="nav-icon">🚪</span>
+                    Chiqish
+                </a>
+            {% else %}
+                <a href="{{ url_for('login') }}" class="nav-link">
+                    <span class="nav-icon">🔑</span>
+                    Kirish
+                </a>
+                <a href="{{ url_for('register') }}" class="nav-link">
+                    <span class="nav-icon">📝</span>
+                    Ro'yxatdan o'tish
+                </a>
+            {% endif %}
+        </div>
+        
+        <!-- Mobile menu button -->
+        <button class="mobile-menu-btn" onclick="toggleMobileMenu()">
+            ☰
+        </button>
+    </div>
+</nav>
+
+<!-- Mobile menu -->
+<div class="mobile-menu" id="mobileMenu">
+    {% if current_user.is_authenticated %}
+        <a href="{{ url_for('dashboard') }}">📊 Dashboard</a>
+        <a href="{{ url_for('profile') }}">👤 Profil</a>
+        <a href="{{ url_for('logout') }}">🚪 Chiqish</a>
+    {% else %}
+        <a href="{{ url_for('login') }}">🔑 Kirish</a>
+        <a href="{{ url_for('register') }}">📝 Ro'yxatdan o'tish</a>
+    {% endif %}
+</div>
+"""

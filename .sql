@@ -1,0 +1,27 @@
+CREATE TABLE eco_points (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id INTEGER NOT NULL,
+    date DATE DEFAULT CURRENT_DATE,
+    points INTEGER DEFAULT 0,
+    task_type TEXT NOT NULL,
+    FOREIGN KEY (user_id) REFERENCES users (id)
+);
+CREATE TABLE users (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    name TEXT NOT NULL,
+    email TEXT UNIQUE NOT NULL,
+    password_hash TEXT NOT NULL,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+);
+CREATE TABLE badges (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id INTEGER NOT NULL,
+    badge_name TEXT NOT NULL,
+    earned_date DATE DEFAULT CURRENT_DATE,
+    FOREIGN KEY (user_id) REFERENCES users (id)
+);
+CREATE TABLE tips (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    text TEXT NOT NULL,
+    category TEXT NOT NULL
+);

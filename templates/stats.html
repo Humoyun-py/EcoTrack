@@ -1,0 +1,499 @@
+{% extends "base.html" %}
+
+{% block title %}Statistika - EcoTrack{% endblock %}
+
+{% block content %}
+<div class="stats-container">
+    <div class="stats-header">
+        <h1>📈 Statistika va Tahlillar</h1>
+        <p>Ekologik faolligingizning batafsil tahlili</p>
+    </div>
+
+    <div class="stats-grid">
+        <!-- Overall Stats -->
+        <div class="stats-overview">
+            <h2>Umumiy Ko'rsatkichlar</h2>
+            <div class="overview-cards">
+                <div class="overview-card">
+                    <div class="overview-icon">🏆</div>
+                    <div class="overview-content">
+                        <h3>Umumiy Ball</h3>
+                        <p class="overview-value">{{ total_points }}</p>
+                        <p class="overview-label">Jami yig'ilgan ball</p>
+                    </div>
+                </div>
+                <div class="overview-card">
+                    <div class="overview-icon">📊</div>
+                    <div class="overview-content">
+                        <h3>Daraja</h3>
+                        <p class="overview-value">{{ total_points // 100 }}</p>
+                        <p class="overview-label">Ekologik daraja</p>
+                    </div>
+                </div>
+                <div class="overview-card">
+                    <div class="overview-icon">🛡️</div>
+                    <div class="overview-content">
+                        <h3>Yutuqlar</h3>
+                        <p class="overview-value">{{ badges | length }}</p>
+                        <p class="overview-label">Qo'lga kiritgan yutuqlar</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Weekly Performance -->
+        <div class="weekly-stats-section">
+            <h2>📅 Haftalik Faollik</h2>
+            <div class="weekly-cards">
+                <div class="weekly-card">
+                    <h3>Haftalik Ball</h3>
+                    <p class="weekly-value">{{ weekly_stats.weekly_points }}</p>
+                    <p class="weekly-label">Bu hafta yig'ilgan ball</p>
+                </div>
+                <div class="weekly-card">
+                    <h3>Bajarilgan Topshiriqlar</h3>
+                    <p class="weekly-value">{{ weekly_stats.tasks_completed }}</p>
+                    <p class="weekly-label">Bu hafta bajarilgan ishlar</p>
+                </div>
+                <div class="weekly-card">
+                    <h3>O'rtacha Kunlik</h3>
+                    <p class="weekly-value">{{ (weekly_stats.weekly_points / 7) | round(1) }}</p>
+                    <p class="weekly-label">Kuniga o'rtacha ball</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Environmental Impact -->
+        <div class="impact-section">
+            <h2>🌍 Atrof-muhitga Ta'siringiz</h2>
+            <div class="impact-cards">
+                <div class="impact-card">
+                    <div class="impact-icon">☁️</div>
+                    <div class="impact-content">
+                        <h3>CO2 Tejash</h3>
+                        <p class="impact-value">{{ environmental_impact.co2_saved }} kg</p>
+                        <p class="impact-desc">Atmosferaga chiqmagan CO2</p>
+                    </div>
+                </div>
+                <div class="impact-card">
+                    <div class="impact-icon">🌳</div>
+                    <div class="impact-content">
+                        <h3>Daraxt Ekish</h3>
+                        <p class="impact-value">{{ environmental_impact.trees_equivalent }}</p>
+                        <p class="impact-desc">Daraxt ekishga teng ta'sir</p>
+                    </div>
+                </div>
+                <div class="impact-card">
+                    <div class="impact-icon">🚗</div>
+                    <div class="impact-content">
+                        <h3>Mashina Haydamaslik</h3>
+                        <p class="impact-value">{{ environmental_impact.km_driven_equivalent }} km</p>
+                        <p class="impact-desc">Mashina haydamaslikka teng</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Progress Over Time -->
+        <div class="progress-section">
+            <h2>📈 Progress Tarixi</h2>
+            <div class="progress-chart-placeholder">
+                <div class="chart-icon">📊</div>
+                <h3>Progress Diagrammasi</h3>
+                <p>Bu yerda vaqt o'tishi bilan progressingiz ko'rsatiladi</p>
+                <p class="chart-note">Tez orada diagrammalar qo'shiladi</p>
+            </div>
+        </div>
+
+        <!-- Achievement Timeline -->
+        <div class="timeline-section">
+            <h2>⏳ Yutuqlar Tarixi</h2>
+            <div class="timeline">
+                {% if badges %}
+                    {% for badge in badges %}
+                    <div class="timeline-item">
+                        <div class="timeline-marker">{{ badge.badge_icon or '🛡️' }}</div>
+                        <div class="timeline-content">
+                            <h4>{{ badge.badge_name }}</h4>
+                            <p>{{ badge.badge_description }}</p>
+                            <span class="timeline-date">{{ badge.earned_date.strftime('%Y-%m-%d') }}</span>
+                        </div>
+                    </div>
+                    {% endfor %}
+                {% else %}
+                    <div class="no-timeline">
+                        <p>Hali hech qanday yutuq yo'q. Birinchi yutug'ingizni qo'lga kiriting! 🌟</p>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Tips for Improvement -->
+        <div class="tips-section">
+            <h2>💡 Takliflar</h2>
+            <div class="tips-list">
+                <div class="tip-item">
+                    <span class="tip-icon">🚀</span>
+                    <div class="tip-content">
+                        <h4>Kunlik Topshiriqlarni Bajarish</h4>
+                        <p>Har kuni kamida 2 ta topshiriqni bajarish orqali tezroq progress qiling</p>
+                    </div>
+                </div>
+                <div class="tip-item">
+                    <span class="tip-icon">📚</span>
+                    <div class="tip-content">
+                        <h4>Ekologik Bilimlar</h4>
+                        <p>Atrof-muhit haqida ko'proq o'rganing va yangi ekologik odatlarni o'zlashtiring</p>
+                    </div>
+                </div>
+                <div class="tip-item">
+                    <span class="tip-icon">👥</span>
+                    <div class="tip-content">
+                        <h4>Do'stlaringizni Jalb Qiling</h4>
+                        <p>Do'stlaringizni platformaga taklif qiling va birgalikda raqobatlashing</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.stats-container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0 1rem;
+}
+
+.stats-header {
+    text-align: center;
+    margin-bottom: 3rem;
+    padding: 2rem 0;
+}
+
+.stats-header h1 {
+    font-size: 2.5rem;
+    margin-bottom: 0.5rem;
+    color: var(--text-color);
+}
+
+.stats-header p {
+    color: #666;
+    font-size: 1.1rem;
+}
+
+.stats-grid {
+    display: flex;
+    flex-direction: column;
+    gap: 2rem;
+}
+
+/* Overview Styles */
+.stats-overview h2, .weekly-stats-section h2, .impact-section h2, 
+.progress-section h2, .timeline-section h2, .tips-section h2 {
+    margin-bottom: 1.5rem;
+    color: var(--text-color);
+    font-size: 1.5rem;
+}
+
+.overview-cards {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 1.5rem;
+}
+
+.overview-card {
+    background: var(--card-color);
+    padding: 2rem;
+    border-radius: 12px;
+    box-shadow: var(--shadow);
+    display: flex;
+    align-items: center;
+    gap: 1.5rem;
+    transition: transform 0.3s ease;
+}
+
+.overview-card:hover {
+    transform: translateY(-5px);
+}
+
+.overview-icon {
+    font-size: 3rem;
+}
+
+.overview-content h3 {
+    color: #666;
+    font-size: 1rem;
+    margin-bottom: 0.5rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.overview-value {
+    font-size: 2rem;
+    font-weight: bold;
+    color: var(--primary-color);
+    margin: 0;
+}
+
+.overview-label {
+    color: #888;
+    font-size: 0.9rem;
+    margin: 0;
+}
+
+/* Weekly Stats */
+.weekly-cards {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1.5rem;
+}
+
+.weekly-card {
+    background: var(--card-color);
+    padding: 1.5rem;
+    border-radius: 12px;
+    box-shadow: var(--shadow);
+    text-align: center;
+    transition: transform 0.3s ease;
+}
+
+.weekly-card:hover {
+    transform: translateY(-3px);
+}
+
+.weekly-card h3 {
+    color: #666;
+    font-size: 0.9rem;
+    margin-bottom: 1rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.weekly-value {
+    font-size: 2rem;
+    font-weight: bold;
+    color: var(--primary-color);
+    margin: 0;
+}
+
+.weekly-label {
+    color: #888;
+    font-size: 0.8rem;
+    margin: 0;
+}
+
+/* Impact Section */
+.impact-cards {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 1.5rem;
+}
+
+.impact-card {
+    background: var(--card-color);
+    padding: 2rem;
+    border-radius: 12px;
+    box-shadow: var(--shadow);
+    display: flex;
+    align-items: center;
+    gap: 1.5rem;
+    transition: transform 0.3s ease;
+}
+
+.impact-card:hover {
+    transform: translateY(-5px);
+}
+
+.impact-icon {
+    font-size: 2.5rem;
+}
+
+.impact-content h3 {
+    color: var(--text-color);
+    margin-bottom: 0.5rem;
+    font-size: 1.1rem;
+}
+
+.impact-value {
+    font-size: 1.5rem;
+    font-weight: bold;
+    color: var(--primary-color);
+    margin: 0;
+}
+
+.impact-desc {
+    color: #666;
+    font-size: 0.9rem;
+    margin: 0;
+}
+
+/* Progress Section */
+.progress-chart-placeholder {
+    background: var(--card-color);
+    padding: 3rem 2rem;
+    border-radius: 12px;
+    box-shadow: var(--shadow);
+    text-align: center;
+    border: 2px dashed #ddd;
+}
+
+.chart-icon {
+    font-size: 4rem;
+    margin-bottom: 1rem;
+}
+
+.progress-chart-placeholder h3 {
+    margin-bottom: 0.5rem;
+    color: var(--text-color);
+}
+
+.progress-chart-placeholder p {
+    color: #666;
+    margin-bottom: 0.5rem;
+}
+
+.chart-note {
+    font-size: 0.9rem;
+    color: #888;
+    font-style: italic;
+}
+
+/* Timeline Section */
+.timeline {
+    background: var(--card-color);
+    padding: 2rem;
+    border-radius: 12px;
+    box-shadow: var(--shadow);
+}
+
+.timeline-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 1.5rem;
+    padding: 1.5rem 0;
+    border-bottom: 1px solid #e9ecef;
+}
+
+.timeline-item:last-child {
+    border-bottom: none;
+}
+
+.timeline-marker {
+    font-size: 1.5rem;
+    background: var(--primary-color);
+    color: white;
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
+.timeline-content h4 {
+    margin-bottom: 0.5rem;
+    color: var(--text-color);
+}
+
+.timeline-content p {
+    color: #666;
+    margin-bottom: 0.5rem;
+}
+
+.timeline-date {
+    color: #888;
+    font-size: 0.8rem;
+}
+
+.no-timeline {
+    text-align: center;
+    padding: 2rem;
+    color: #666;
+}
+
+/* Tips Section */
+.tips-list {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.tip-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 1.5rem;
+    padding: 1.5rem;
+    background: var(--card-color);
+    border-radius: 12px;
+    box-shadow: var(--shadow);
+    transition: transform 0.3s ease;
+}
+
+.tip-item:hover {
+    transform: translateX(5px);
+}
+
+.tip-icon {
+    font-size: 2rem;
+    flex-shrink: 0;
+}
+
+.tip-content h4 {
+    margin-bottom: 0.5rem;
+    color: var(--text-color);
+}
+
+.tip-content p {
+    color: #666;
+    margin: 0;
+}
+
+@media (max-width: 768px) {
+    .stats-header h1 {
+        font-size: 2rem;
+    }
+    
+    .overview-cards {
+        grid-template-columns: 1fr;
+    }
+    
+    .weekly-cards {
+        grid-template-columns: 1fr;
+    }
+    
+    .impact-cards {
+        grid-template-columns: 1fr;
+    }
+    
+    .overview-card, .impact-card {
+        flex-direction: column;
+        text-align: center;
+        gap: 1rem;
+    }
+    
+    .timeline-item {
+        flex-direction: column;
+        text-align: center;
+        gap: 1rem;
+    }
+    
+    .tip-item {
+        flex-direction: column;
+        text-align: center;
+        gap: 1rem;
+    }
+}
+
+@media (max-width: 480px) {
+    .stats-container {
+        padding: 0 0.5rem;
+    }
+    
+    .overview-card, .weekly-card, .impact-card {
+        padding: 1.5rem;
+    }
+}
+</style>
+{% endblock %}

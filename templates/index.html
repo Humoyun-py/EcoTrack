@@ -1,0 +1,93 @@
+{% extends "base.html" %}
+
+{% block title %}EcoTrack - Ekologik Odatlarni Kuzatish{% endblock %}
+
+{% block content %}
+<div style="text-align: center; padding: 4rem 0;">
+    <h1 style="font-size: 3rem; margin-bottom: 1rem; color: var(--primary-color);">
+        🌿 EcoTrack
+    </h1>
+    <p style="font-size: 1.25rem; color: #666; margin-bottom: 3rem; max-width: 600px; margin-left: auto; margin-right: auto;">
+        Ekologik odatlaringizni kuzatib boring, ball yig'ing va sayyoramizni yaxshilashga yordam bering
+    </p>
+
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 2rem; margin: 3rem 0;">
+        <div style="background: var(--card-color); padding: 2rem; border-radius: 12px; box-shadow: var(--shadow);">
+            <div style="font-size: 2rem; margin-bottom: 1rem;">👥</div>
+            <h3 style="margin-bottom: 0.5rem;">{{ total_users }}+</h3>
+            <p style="color: #666;">Faol Foydalanuvchi</p>
+        </div>
+        <div style="background: var(--card-color); padding: 2rem; border-radius: 12px; box-shadow: var(--shadow);">
+            <div style="font-size: 2rem; margin-bottom: 1rem;">✅</div>
+            <h3 style="margin-bottom: 0.5rem;">{{ total_tasks }}+</h3>
+            <p style="color: #666;">Bajarilgan Topshiriq</p>
+        </div>
+        <div style="background: var(--card-color); padding: 2rem; border-radius: 12px; box-shadow: var(--shadow);">
+            <div style="font-size: 2rem; margin-bottom: 1rem;">🌍</div>
+            <h3 style="margin-bottom: 0.5rem;">{{ total_co2 }}+</h3>
+            <p style="color: #666;">Kg CO2 Tejash</p>
+        </div>
+    </div>
+
+    <div style="margin: 2rem 0;">
+        {% if current_user.is_authenticated %}
+            <div style="background: var(--card-color); padding: 2rem; border-radius: 12px; box-shadow: var(--shadow); max-width: 500px; margin: 0 auto 2rem;">
+                <h3 style="margin-bottom: 1rem;">📊 Sizning Statistikangiz</h3>
+                <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 1rem;">
+                    <div style="text-align: center;">
+                        <div style="font-size: 1.5rem; font-weight: bold; color: var(--primary-color);">
+                            {{ user_stats.total_points }}
+                        </div>
+                        <div style="font-size: 0.875rem; color: #666;">Umumiy Ball</div>
+                    </div>
+                    <div style="text-align: center;">
+                        <div style="font-size: 1.5rem; font-weight: bold; color: var(--primary-color);">
+                            {{ user_stats.level }}
+                        </div>
+                        <div style="font-size: 0.875rem; color: #666;">Daraja</div>
+                    </div>
+                </div>
+            </div>
+            
+            <div style="display: flex; gap: 1rem; justify-content: center; flex-wrap: wrap;">
+                <a href="{{ url_for('dashboard') }}" class="btn btn-primary">
+                    Dashboardga O'tish
+                </a>
+                <a href="{{ url_for('profile') }}" class="btn btn-outline">
+                    Mening Profilim
+                </a>
+            </div>
+        {% else %}
+            <div style="display: flex; gap: 1rem; justify-content: center; flex-wrap: wrap;">
+                <a href="{{ url_for('register') }}" class="btn btn-primary">
+                    Boshlash
+                </a>
+                <a href="{{ url_for('login') }}" class="btn btn-outline">
+                    Kirish
+                </a>
+            </div>
+        {% endif %}
+    </div>
+
+    <div style="background: var(--card-color); padding: 3rem; border-radius: 16px; box-shadow: var(--shadow); margin-top: 4rem;">
+        <h2 style="margin-bottom: 2rem; text-align: center;">Qanday Ishlaydi?</h2>
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 2rem;">
+            <div style="text-align: center;">
+                <div style="font-size: 3rem; margin-bottom: 1rem;">1</div>
+                <h3 style="margin-bottom: 1rem;">Ro'yxatdan O'ting</h3>
+                <p style="color: #666;">Bepul hisob yarating va ekologik safaringizni boshlang</p>
+            </div>
+            <div style="text-align: center;">
+                <div style="font-size: 3rem; margin-bottom: 1rem;">2</div>
+                <h3 style="margin-bottom: 1rem;">Topshiriqlarni Bajar</h3>
+                <p style="color: #666;">Kunlik ekologik topshiriqlarni bajaring va ballar yig'ing</p>
+            </div>
+            <div style="text-align: center;">
+                <div style="font-size: 3rem; margin-bottom: 1rem;">3</div>
+                <h3 style="margin-bottom: 1rem;">Progressni Kuzat</h3>
+                <p style="color: #666;">O'z rivojlashingizni kuzating va statistikani ko'ring</p>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

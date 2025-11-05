@@ -1,0 +1,1036 @@
+{% extends "base.html" %}
+
+{% block title %}Profil - EcoTrack{% endblock %}
+
+{% block content %}
+<div class="profile-container">
+    <!-- Profile Header -->
+    <div class="profile-header">
+        <div class="profile-main">
+            <div class="profile-avatar">
+                <div class="avatar-circle">{{ user.name[0] | upper }}</div>
+                <div class="online-status"></div>
+            </div>
+            <div class="profile-info">
+                <h1>{{ user.name }}</h1>
+                <p class="profile-email">{{ user.email }}</p>
+                <div class="profile-meta">
+                    <div class="meta-item">
+                        <span class="meta-icon">📅</span>
+                        <span>A'zo: {{ user.created_at.strftime('%d.%m.%Y') }}</span>
+                    </div>
+                    <div class="meta-item">
+                        <span class="meta-icon">🔄</span>
+                        <span>Oxirgi faollik: {{ last_activity }}</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="profile-level-card">
+            <div class="level-display">
+                <span class="level-label">Daraja</span>
+                <span class="level-number">{{ user_level }}</span>
+            </div>
+            <div class="level-progress">
+                <div class="progress-bar">
+                    <div class="progress-fill" style="width: {{ progress_percentage }}%"></div>
+                </div>
+                <span class="progress-text">{{ next_level_points }} ball qoldi</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Quick Stats -->
+    <div class="stats-grid">
+        <div class="stat-card">
+            <div class="stat-icon">🏆</div>
+            <div class="stat-content">
+                <h3>Umumiy Ball</h3>
+                <p class="stat-number">{{ total_points }}</p>
+            </div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-icon">📈</div>
+            <div class="stat-content">
+                <h3>Daraja</h3>
+                <p class="stat-number">{{ user_level }}</p>
+            </div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-icon">🛡️</div>
+            <div class="stat-content">
+                <h3>Yutuqlar</h3>
+                <p class="stat-number">{{ badges | length }}</p>
+            </div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-icon">📅</div>
+            <div class="stat-content">
+                <h3>Faol Kunlar</h3>
+                <p class="stat-number">{{ active_days }}</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Today's Section -->
+    <div class="today-section">
+        <div class="section-header">
+            <h2>📊 Bugungi Faoliyat</h2>
+            <p>{{ today_date }}</p>
+        </div>
+
+        <div class="today-grid">
+            <!-- Today's Tasks -->
+            <div class="today-card">
+                <div class="card-header">
+                    <h3>✅ Bugun Bajargan Topshiriqlar</h3>
+                    <span class="today-points">{{ today_points }} ball</span>
+                </div>
+                <div class="today-tasks-list">
+                    {% if today_tasks %}
+                        {% for task in today_tasks %}
+                        <div class="task-item">
+                            <span class="task-icon">{{ task.icon }}</span>
+                            <div class="task-details">
+                                <span class="task-name">{{ task.name }}</span>
+                                <span class="task-time">{{ task.time }}</span>
+                            </div>
+                            <span class="task-points">+{{ task.points }}</span>
+                        </div>
+                        {% endfor %}
+                    {% else %}
+                        <div class="empty-state">
+                            <div class="empty-icon">📝</div>
+                            <p>Bugun hali topshiriq bajarilmagan</p>
+                            <a href="{{ url_for('dashboard') }}" class="btn btn-primary">Topshiriqlarni Bajarish</a>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Today's Impact -->
+            <div class="today-card">
+                <div class="card-header">
+                    <h3>🌱 Bugungi Ekologik Ta'sir</h3>
+                    <span class="impact-badge">Ijobiy</span>
+                </div>
+                <div class="impact-stats">
+                    <div class="impact-item">
+                        <div class="impact-icon">☁️</div>
+                        <div class="impact-info">
+                            <span class="impact-value">{{ today_co2 }} kg</span>
+                            <span class="impact-label">CO2 tejash</span>
+                            <span class="impact-desc">{{ co2_car_km }} km mashina haydamaslik</span>
+                        </div>
+                    </div>
+                    <div class="impact-item">
+                        <div class="impact-icon">💧</div>
+                        <div class="impact-info">
+                            <span class="impact-value">{{ today_water }} L</span>
+                            <span class="impact-label">Suv tejash</span>
+                            <span class="impact-desc">{{ water_showers }} dusha uchun yetarli</span>
+                        </div>
+                    </div>
+                    <div class="impact-item">
+                        <div class="impact-icon">♻️</div>
+                        <div class="impact-info">
+                            <span class="impact-value">{{ today_plastic }} kg</span>
+                            <span class="impact-label">Plastik qayta ishlash</span>
+                            <span class="impact-desc">{{ plastic_bottles }} ta plastik shisha</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Daily Goal -->
+            <div class="today-card">
+                <div class="card-header">
+                    <h3>🎯 Kunlik Maqsad</h3>
+                    <span class="goal-percentage">{{ (today_points / 50 * 100) | round }}%</span>
+                </div>
+                <div class="goal-progress">
+                    <div class="goal-bar">
+                        <div class="goal-fill" style="width: {{ (today_points / 50 * 100) | round }}%"></div>
+                    </div>
+                    <div class="goal-text">
+                        <span>{{ today_points }}/50 ball</span>
+                        <span>{{ 50 - today_points }} ball qoldi</span>
+                    </div>
+                </div>
+                <div class="goal-reward">
+                    <span class="reward-icon">⭐</span>
+                    <span>Maqsadga yetilsa +5 qo'shimcha ball</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Progress Section -->
+    <div class="progress-section">
+        <div class="section-header">
+            <h2>📈 Rivojlanish Progressi</h2>
+            <p>Keyingi darajaga yetish uchun zarur ballar</p>
+        </div>
+        <div class="progress-content">
+            <div class="level-progress-card">
+                <div class="level-info">
+                    <span>Daraja {{ user_level }}</span>
+                    <span>Daraja {{ user_level + 1 }}</span>
+                </div>
+                <div class="progress-bar-large">
+                    <div class="progress-fill-large" style="width: {{ progress_percentage }}%"></div>
+                    <div class="progress-text-overlay">{{ total_points % 100 }}/100</div>
+                </div>
+                <p class="progress-description">
+                    Keyingi darajaga <strong>{{ next_level_points }} ball</strong> qoldi
+                </p>
+            </div>
+
+            <!-- Next Badge -->
+            <div class="next-badge-card">
+                <h4>Keyingi Yutuq</h4>
+                <div class="next-badge-content">
+                    <div class="badge-preview">
+                        <span class="badge-icon-large">{{ next_badge.icon }}</span>
+                    </div>
+                    <div class="badge-info">
+                        <h5>{{ next_badge.name }}</h5>
+                        <p>{{ next_badge.description }}</p>
+                        <div class="badge-progress">
+                            <div class="progress-bar-small">
+                                <div class="progress-fill-small" style="width: {{ next_badge.progress }}%"></div>
+                            </div>
+                            <span>{{ next_badge.current }}/{{ next_badge.required }} ball</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Badges Section -->
+    <div class="badges-section">
+        <div class="section-header">
+            <h2>🏅 Qo'lga Kiritgan Yutuqlar</h2>
+            <p>Ekologik safaringizdagi muvaffaqiyatlar</p>
+        </div>
+        {% if badges %}
+        <div class="badges-grid">
+            {% for badge in badges %}
+            <div class="badge-card">
+                <div class="badge-icon">{{ badge.badge_icon }}</div>
+                <div class="badge-content">
+                    <h4>{{ badge.badge_name }}</h4>
+                    <p>{{ badge.badge_description }}</p>
+                    <span class="badge-date">{{ badge.earned_date.strftime('%d.%m.%Y') }}</span>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <div class="empty-state">
+            <div class="empty-icon">🏆</div>
+            <h3>Hali yutuqlar yo'q</h3>
+            <p>Topshiriqlarni bajarishda davom eting va birinchi yutug'ingizni qo'lga kiriting!</p>
+            <a href="{{ url_for('dashboard') }}" class="btn btn-primary">Topshiriqlarni Bajarish</a>
+        </div>
+        {% endif %}
+    </div>
+
+    <!-- Recent Activity -->
+    <div class="activity-section">
+        <div class="section-header">
+            <h2>📋 So'nggi Faoliyat</h2>
+            <p>Oxirgi 10 ta ekologik harakat</p>
+        </div>
+        {% if recent_activities %}
+        <div class="activity-timeline">
+            {% for activity in recent_activities %}
+            <div class="activity-item">
+                <div class="activity-date">
+                    {{ activity.date.strftime('%d %b') }}
+                </div>
+                <div class="activity-content">
+                    <div class="activity-icon">{{ activity.icon }}</div>
+                    <div class="activity-info">
+                        <p class="activity-desc">{{ activity.description }}</p>
+                    </div>
+                    <span class="activity-points">+{{ activity.points }}</span>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <div class="empty-state">
+            <div class="empty-icon">📊</div>
+            <p>Hali hech qanday faoliyat yo'q</p>
+            <a href="{{ url_for('dashboard') }}" class="btn btn-primary">Birinchi Topshiriqni Bajarish</a>
+        </div>
+        {% endif %}
+    </div>
+
+    <!-- Environmental Impact -->
+    <div class="impact-section">
+        <div class="section-header">
+            <h2>🌍 Umumiy Ekologik Ta'siringiz</h2>
+            <p>Barcha vaqt davomida yaratgan ijobiy o'zgarish</p>
+        </div>
+        <div class="impact-grid">
+            <div class="impact-stat-card">
+                <div class="impact-stat-icon">☁️</div>
+                <div class="impact-stat-content">
+                    <h3>{{ total_co2_saved }} kg</h3>
+                    <p>CO2 tejash</p>
+                    <small>{{ total_co2_trees }} ta daraxt ekishga teng</small>
+                </div>
+            </div>
+            <div class="impact-stat-card">
+                <div class="impact-stat-icon">💧</div>
+                <div class="impact-stat-content">
+                    <h3>{{ total_water_saved }} L</h3>
+                    <p>Suv tejash</p>
+                    <small>{{ total_water_showers }} dusha uchun yetarli</small>
+                </div>
+            </div>
+            <div class="impact-stat-card">
+                <div class="impact-stat-icon">♻️</div>
+                <div class="impact-stat-content">
+                    <h3>{{ total_plastic_saved }} kg</h3>
+                    <p>Plastik qayta ishlash</p>
+                    <small>{{ total_plastic_bottles }} ta plastik shisha</small>
+                </div>
+            </div>
+            <div class="impact-stat-card">
+                <div class="impact-stat-icon">⚡</div>
+                <div class="impact-stat-content">
+                    <h3>{{ total_energy_saved }} kWh</h3>
+                    <p>Eneriya tejash</p>
+                    <small>{{ total_energy_homes }} uyga bir kunlik energiya</small>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.profile-container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0 1rem;
+}
+
+/* Profile Header */
+.profile-header {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    padding: 2rem;
+    border-radius: 20px;
+    margin-bottom: 2rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+}
+
+.profile-main {
+    display: flex;
+    align-items: center;
+    gap: 1.5rem;
+}
+
+.profile-avatar {
+    position: relative;
+}
+
+.avatar-circle {
+    width: 80px;
+    height: 80px;
+    background: rgba(255,255,255,0.2);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 2rem;
+    font-weight: bold;
+    backdrop-filter: blur(10px);
+    border: 2px solid rgba(255,255,255,0.3);
+}
+
+.online-status {
+    position: absolute;
+    bottom: 5px;
+    right: 5px;
+    width: 12px;
+    height: 12px;
+    background: #4ade80;
+    border-radius: 50%;
+    border: 2px solid white;
+}
+
+.profile-info h1 {
+    font-size: 2rem;
+    margin-bottom: 0.5rem;
+}
+
+.profile-email {
+    opacity: 0.9;
+    margin-bottom: 1rem;
+}
+
+.profile-meta {
+    display: flex;
+    gap: 1.5rem;
+}
+
+.meta-item {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.9rem;
+    opacity: 0.8;
+}
+
+.profile-level-card {
+    text-align: center;
+    background: rgba(255,255,255,0.1);
+    padding: 1.5rem;
+    border-radius: 16px;
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255,255,255,0.2);
+}
+
+.level-label {
+    display: block;
+    font-size: 0.9rem;
+    opacity: 0.8;
+    margin-bottom: 0.5rem;
+}
+
+.level-number {
+    font-size: 2.5rem;
+    font-weight: bold;
+    display: block;
+    margin-bottom: 1rem;
+}
+
+.progress-bar {
+    width: 150px;
+    height: 6px;
+    background: rgba(255,255,255,0.3);
+    border-radius: 3px;
+    overflow: hidden;
+    margin-bottom: 0.5rem;
+}
+
+.progress-fill {
+    height: 100%;
+    background: white;
+    border-radius: 3px;
+}
+
+.progress-text {
+    font-size: 0.8rem;
+    opacity: 0.8;
+}
+
+/* Stats Grid */
+.stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1.5rem;
+    margin-bottom: 2rem;
+}
+
+.stat-card {
+    background: white;
+    padding: 1.5rem;
+    border-radius: 16px;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    transition: transform 0.3s ease;
+}
+
+.stat-card:hover {
+    transform: translateY(-5px);
+}
+
+.stat-icon {
+    font-size: 2rem;
+}
+
+.stat-content h3 {
+    color: #666;
+    font-size: 0.9rem;
+    margin-bottom: 0.5rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.stat-number {
+    font-size: 1.8rem;
+    font-weight: bold;
+    color: #667eea;
+    margin: 0;
+}
+
+/* Today Section */
+.today-section {
+    background: white;
+    padding: 2rem;
+    border-radius: 20px;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+    margin-bottom: 2rem;
+}
+
+.section-header {
+    margin-bottom: 2rem;
+}
+
+.section-header h2 {
+    font-size: 1.5rem;
+    margin-bottom: 0.5rem;
+    color: #1e293b;
+}
+
+.section-header p {
+    color: #666;
+}
+
+.today-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1.5rem;
+}
+
+.today-card {
+    background: #f8fafc;
+    padding: 1.5rem;
+    border-radius: 16px;
+    border: 1px solid #e2e8f0;
+}
+
+.card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1.5rem;
+}
+
+.card-header h3 {
+    font-size: 1.1rem;
+    color: #1e293b;
+}
+
+.today-points {
+    background: #667eea;
+    color: white;
+    padding: 0.5rem 1rem;
+    border-radius: 20px;
+    font-size: 0.9rem;
+    font-weight: 600;
+}
+
+.impact-badge {
+    background: #10b981;
+    color: white;
+    padding: 0.5rem 1rem;
+    border-radius: 20px;
+    font-size: 0.9rem;
+    font-weight: 600;
+}
+
+.today-tasks-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+.task-item {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 1rem;
+    background: white;
+    border-radius: 12px;
+    border-left: 4px solid #667eea;
+}
+
+.task-icon {
+    font-size: 1.2rem;
+}
+
+.task-details {
+    flex: 1;
+}
+
+.task-name {
+    display: block;
+    font-weight: 500;
+    margin-bottom: 0.25rem;
+}
+
+.task-time {
+    font-size: 0.8rem;
+    color: #666;
+}
+
+.task-points {
+    background: #667eea;
+    color: white;
+    padding: 0.25rem 0.75rem;
+    border-radius: 20px;
+    font-size: 0.8rem;
+    font-weight: 600;
+}
+
+.impact-stats {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.impact-item {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 1rem;
+    background: white;
+    border-radius: 12px;
+}
+
+.impact-icon {
+    font-size: 1.5rem;
+}
+
+.impact-value {
+    font-size: 1.2rem;
+    font-weight: 700;
+    color: #667eea;
+    display: block;
+}
+
+.impact-label {
+    font-size: 0.9rem;
+    color: #1e293b;
+    display: block;
+    margin-bottom: 0.25rem;
+}
+
+.impact-desc {
+    font-size: 0.8rem;
+    color: #666;
+}
+
+.goal-progress {
+    margin-bottom: 1rem;
+}
+
+.goal-bar {
+    width: 100%;
+    height: 8px;
+    background: #e2e8f0;
+    border-radius: 4px;
+    overflow: hidden;
+    margin-bottom: 0.5rem;
+}
+
+.goal-fill {
+    height: 100%;
+    background: linear-gradient(90deg, #667eea, #764ba2);
+    border-radius: 4px;
+    transition: width 0.5s ease;
+}
+
+.goal-text {
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.9rem;
+    color: #666;
+}
+
+.goal-reward {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.75rem;
+    background: rgba(255, 193, 7, 0.1);
+    border-radius: 8px;
+    border: 1px solid rgba(255, 193, 7, 0.3);
+}
+
+.reward-icon {
+    font-size: 1.2rem;
+}
+
+/* Progress Section */
+.progress-section {
+    background: white;
+    padding: 2rem;
+    border-radius: 20px;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+    margin-bottom: 2rem;
+}
+
+.progress-content {
+    display: grid;
+    grid-template-columns: 2fr 1fr;
+    gap: 2rem;
+}
+
+.level-progress-card {
+    padding: 1.5rem;
+    background: #f8fafc;
+    border-radius: 16px;
+}
+
+.level-info {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 1rem;
+    font-weight: 500;
+    color: #1e293b;
+}
+
+.progress-bar-large {
+    width: 100%;
+    height: 20px;
+    background: #e2e8f0;
+    border-radius: 10px;
+    overflow: hidden;
+    margin: 1rem 0;
+    position: relative;
+}
+
+.progress-fill-large {
+    height: 100%;
+    background: linear-gradient(90deg, #667eea, #764ba2);
+    border-radius: 10px;
+    transition: width 0.5s ease;
+}
+
+.progress-text-overlay {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    color: white;
+    font-weight: 600;
+    font-size: 0.8rem;
+    text-shadow: 0 1px 2px rgba(0,0,0,0.3);
+}
+
+.progress-description {
+    text-align: center;
+    color: #666;
+}
+
+.next-badge-card {
+    padding: 1.5rem;
+    background: #f8fafc;
+    border-radius: 16px;
+    border: 2px dashed #cbd5e1;
+}
+
+.next-badge-card h4 {
+    margin-bottom: 1rem;
+    color: #1e293b;
+}
+
+.next-badge-content {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.badge-icon-large {
+    font-size: 3rem;
+}
+
+.badge-info h5 {
+    margin-bottom: 0.5rem;
+    color: #1e293b;
+}
+
+.badge-info p {
+    color: #666;
+    font-size: 0.9rem;
+    margin-bottom: 1rem;
+}
+
+.badge-progress {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.progress-bar-small {
+    flex: 1;
+    height: 6px;
+    background: #e2e8f0;
+    border-radius: 3px;
+    overflow: hidden;
+}
+
+.progress-fill-small {
+    height: 100%;
+    background: linear-gradient(90deg, #667eea, #764ba2);
+    border-radius: 3px;
+}
+
+.badge-progress span {
+    font-size: 0.8rem;
+    color: #666;
+    min-width: 80px;
+}
+
+/* Badges Section */
+.badges-section {
+    background: white;
+    padding: 2rem;
+    border-radius: 20px;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+    margin-bottom: 2rem;
+}
+
+.badges-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 1rem;
+}
+
+.badge-card {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 1.5rem;
+    background: #f8fafc;
+    border-radius: 16px;
+    border-left: 4px solid #667eea;
+    transition: transform 0.3s ease;
+}
+
+.badge-card:hover {
+    transform: translateY(-2px);
+}
+
+.badge-icon {
+    font-size: 2rem;
+}
+
+.badge-content h4 {
+    margin-bottom: 0.5rem;
+    color: #1e293b;
+}
+
+.badge-content p {
+    color: #666;
+    font-size: 0.9rem;
+    margin-bottom: 0.5rem;
+}
+
+.badge-date {
+    font-size: 0.8rem;
+    color: #999;
+}
+
+/* Activity Section */
+.activity-section {
+    background: white;
+    padding: 2rem;
+    border-radius: 20px;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+    margin-bottom: 2rem;
+}
+
+.activity-timeline {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.activity-item {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 1rem;
+    background: #f8fafc;
+    border-radius: 12px;
+}
+
+.activity-date {
+    background: #667eea;
+    color: white;
+    padding: 0.5rem 0.75rem;
+    border-radius: 8px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    min-width: 50px;
+    text-align: center;
+}
+
+.activity-content {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    flex: 1;
+}
+
+.activity-icon {
+    font-size: 1.2rem;
+}
+
+.activity-desc {
+    flex: 1;
+    font-weight: 500;
+    color: #1e293b;
+}
+
+.activity-points {
+    background: #667eea;
+    color: white;
+    padding: 0.25rem 0.75rem;
+    border-radius: 20px;
+    font-size: 0.8rem;
+    font-weight: 600;
+}
+
+/* Impact Section */
+.impact-section {
+    background: white;
+    padding: 2rem;
+    border-radius: 20px;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+}
+
+.impact-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 1.5rem;
+}
+
+.impact-stat-card {
+    background: #f8fafc;
+    padding: 1.5rem;
+    border-radius: 16px;
+    text-align: center;
+    border: 1px solid #e2e8f0;
+    transition: transform 0.3s ease;
+}
+
+.impact-stat-card:hover {
+    transform: translateY(-3px);
+}
+
+.impact-stat-icon {
+    font-size: 2.5rem;
+    margin-bottom: 1rem;
+}
+
+.impact-stat-content h3 {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: #667eea;
+    margin-bottom: 0.5rem;
+}
+
+.impact-stat-content p {
+    color: #1e293b;
+    margin-bottom: 0.5rem;
+    font-weight: 500;
+}
+
+.impact-stat-content small {
+    color: #666;
+    font-size: 0.8rem;
+}
+
+/* Empty States */
+.empty-state {
+    text-align: center;
+    padding: 3rem 2rem;
+    color: #666;
+}
+
+.empty-icon {
+    font-size: 4rem;
+    margin-bottom: 1rem;
+    opacity: 0.5;
+}
+
+.empty-state h3 {
+    margin-bottom: 1rem;
+    color: #1e293b;
+}
+
+/* Responsive Design */
+@media (max-width: 1024px) {
+    .today-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .progress-content {
+        grid-template-columns: 1fr;
+    }
+}
+
+@media (max-width: 768px) {
+    .profile-header {
+        flex-direction: column;
+        text-align: center;
+        gap: 1.5rem;
+    }
+    
+    .profile-main {
+        flex-direction: column;
+        gap: 1rem;
+    }
+    
+    .profile-meta {
+        flex-direction: column;
+        gap: 0.5rem;
+    }
+    
+    .stats-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+    
+    .badges-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .impact-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+@media (max-width: 480px) {
+    .profile-container {
+        padding: 0 0.5rem;
+    }
+    
+    .profile-header, .today-section, .progress-section, 
+    .badges-section, .activity-section, .impact-section {
+        padding: 1.5rem;
+    }
+    
+    .stats-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .impact-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .activity-item {
+        flex-direction: column;
+        text-align: center;
+    }
+    
+    .activity-content {
+        width: 100%;
+    }
+}
+</style>
+{% endblock %}
